@@ -92,7 +92,32 @@ class SalesAgent:
             logger.warning(f"POI-søgning fejlede ({value}): {e} – bruger mock")
             return self._mock_pois(value, city)
 
+    # Kendte Horsens B2B targets med rigtige kontaktoplysninger
+    HORSENS_LEADS = {
+        "hotel": [
+            {"name": "Scandic Bygholm Park",        "type": "hotel", "phone": "+45 75 62 23 00", "website": "scandic-hotels.com", "address": "Schützesvej 6, Horsens",   "city": "Horsens", "lat": 55.8534, "lon": 9.8423},
+            {"name": "Hotel Opus Horsens",           "type": "hotel", "phone": "+45 76 25 03 00", "website": "hotelopus.dk",       "address": "Torvegade 17, Horsens",    "city": "Horsens", "lat": 55.8603, "lon": 9.8488},
+            {"name": "Horsens Badehotel",            "type": "hotel", "phone": "",                 "website": "",                   "address": "Strandkærvej, Horsens",   "city": "Horsens", "lat": 55.8580, "lon": 9.8530},
+        ],
+        "hospital": [
+            {"name": "Horsens Regionshospital",     "type": "hospital","phone": "+45 78 42 00 00","website": "horsens.rm.dk",      "address": "Sundvej 30, Horsens",      "city": "Horsens", "lat": 55.8739, "lon": 9.8344},
+            {"name": "Horsens Lægehus",             "type": "hospital","phone": "",               "website": "",                   "address": "Horsens centrum",          "city": "Horsens", "lat": 55.8610, "lon": 9.8500},
+        ],
+        "school": [
+            {"name": "Horsens Gymnasium (HG)",      "type": "school", "phone": "+45 76 28 98 00", "website": "hg.dk",              "address": "Stadionvej 2, Horsens",    "city": "Horsens", "lat": 55.8620, "lon": 9.8550},
+            {"name": "VIA University College",      "type": "school", "phone": "+45 87 55 10 00", "website": "via.dk",             "address": "Chr. M. Østergaards Vej 4","city": "Horsens", "lat": 55.8670, "lon": 9.8400},
+            {"name": "Horsens HF og VUC",           "type": "school", "phone": "+45 76 29 07 00", "website": "horsenshfvuc.dk",    "address": "Fussingsvej 8, Horsens",   "city": "Horsens", "lat": 55.8625, "lon": 9.8480},
+        ],
+        "theatre": [
+            {"name": "CASA Arena Horsens",          "type": "theatre","phone": "+45 75 62 19 00", "website": "casaarena.dk",       "address": "Langmarksvej 60, Horsens", "city": "Horsens", "lat": 55.8572, "lon": 9.8614},
+            {"name": "Horsens Kunstmuseum",         "type": "theatre","phone": "+45 76 29 23 70", "website": "horsenskunstmuseum.dk","address": "Caroline Amalievej 2",   "city": "Horsens", "lat": 55.8618, "lon": 9.8462},
+        ],
+    }
+
     def _mock_pois(self, poi_type: str, city: str) -> list:
+        # Brug rigtige Horsens leads hvis muligt
+        if city.lower().strip() in ("horsens", "horsens by"):
+            return self.HORSENS_LEADS.get(poi_type, [])
         mocks = {
             "hotel":    [{"name": f"{city} Hotel & Konference", "type": "hotel",   "phone": "", "website": "", "address": "Centerby 1", "city": city, "lat": 0, "lon": 0}],
             "hospital": [{"name": f"{city} Sygehus",            "type": "hospital","phone": "", "website": "", "address": "Hospitalsvejen 1", "city": city, "lat": 0, "lon": 0}],

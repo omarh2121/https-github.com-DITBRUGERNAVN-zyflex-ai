@@ -158,6 +158,14 @@
     }
     .nav-btn:active { transform: scale(.97); }
 
+    .no-customers-btn {
+      background: transparent; color: var(--muted); border: 1px solid #333;
+      border-radius: 10px; padding: 10px 24px; font-size: .85rem;
+      cursor: pointer; width: 100%; max-width: 300px; margin-bottom: 14px;
+      transition: background .2s;
+    }
+    .no-customers-btn:active { background: #1a1a1a; transform: scale(.97); }
+
     .status-strip {
       display: flex; gap: 16px; font-size: .8rem; color: var(--muted);
       justify-content: center; flex-wrap: wrap;
@@ -381,6 +389,7 @@
       </div>
       <div class="reason-txt" id="d-reason">–</div>
       <button class="nav-btn" onclick="navigateTo('main')">🗺 NAVIGÉR</button>
+      <button class="no-customers-btn" onclick="reportNoCustomers()" title="Rapportér ingen kunder her">😔 Ingen kunder her</button>
       <div class="status-strip">
         <span id="d-weather-strip">–</span>
         <span id="d-earn-strip">–</span>
@@ -616,6 +625,19 @@ function navigateTo(src) {
   const city = document.getElementById('d-city').value.trim() || 'Horsens';
   window.open(`https://www.google.com/maps/search/${encodeURIComponent(name+', '+city+', Denmark')}`, '_blank');
 }
+async function reportNoCustomers() {
+  const zoneName = currentZone?.name || document.getElementById('d-zone-name').textContent || 'ukendt';
+  try {
+    await fetch(`${API_BASE}/api/feedback`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ zone: zoneName, action: 'no_customers' })
+    });
+    const btn = document.querySelector('.no-customers-btn');
+    if (btn) { btn.textContent = '✅ Gemt!'; setTimeout(() => { btn.textContent = '😔 Ingen kunder her'; }, 2000); }
+  } catch(e) { console.warn('Feedback fejl:', e); }
+}
+
 function selectZone(name, score) {
   document.getElementById('d-zone-name').textContent = name;
   const sEl = document.getElementById('d-score-num');

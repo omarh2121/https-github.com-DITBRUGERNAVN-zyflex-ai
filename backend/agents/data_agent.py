@@ -323,15 +323,28 @@ class DataAgent:
 
     # ── Zoner ────────────────────────────────────────────────────────────────
 
+    # Præcise Horsens-lokationer (rigtige GPS-koordinater)
+    HORSENS_ZONES = [
+        {"id": "centrum",    "name": "Horsens Centrum",       "lat": 55.8608, "lon": 9.8502,  "base_score": 55, "poi_type": "city_center",   "address": "Søndergade, Horsens"},
+        {"id": "station",    "name": "Horsens Station",        "lat": 55.8641, "lon": 9.8438,  "base_score": 52, "poi_type": "transport_hub", "address": "Jernbanegade 1, Horsens"},
+        {"id": "sygehus",    "name": "Horsens Sygehus",        "lat": 55.8739, "lon": 9.8344,  "base_score": 48, "poi_type": "hospital",      "address": "Sundvej 30, Horsens"},
+        {"id": "casa_arena", "name": "CASA Arena",             "lat": 55.8572, "lon": 9.8614,  "base_score": 38, "poi_type": "venue",         "address": "Langmarksvej 60, Horsens"},
+        {"id": "havn",       "name": "Horsens Havn",           "lat": 55.8576, "lon": 9.8664,  "base_score": 35, "poi_type": "city_center",   "address": "Havnen, Horsens"},
+        {"id": "scandic",    "name": "Scandic Bygholm Park",   "lat": 55.8534, "lon": 9.8423,  "base_score": 40, "poi_type": "transport_hub", "address": "Schützesvej 6, Horsens"},
+    ]
+
     def _build_zones(self, city: str, lat: float, lon: float) -> list:
-        """Generér 6 dynamiske zoner rundt om bycentrum."""
+        """Brug præcise Horsens-zoner, eller generér dynamisk for andre byer."""
+        if city.lower().strip() in ("horsens", "horsens by"):
+            return [dict(z) for z in self.HORSENS_ZONES]
+        # Generisk fallback for andre byer
         return [
-            {"id": "centrum",  "name": f"{city} Centrum",  "lat": lat,           "lon": lon,           "base_score": 50, "poi_type": "city_center"},
-            {"id": "station",  "name": f"{city} Station",  "lat": lat + 0.004,   "lon": lon - 0.007,   "base_score": 45, "poi_type": "transport_hub"},
-            {"id": "sygehus",  "name": f"{city} Sygehus",  "lat": lat + 0.010,   "lon": lon - 0.010,   "base_score": 42, "poi_type": "hospital"},
-            {"id": "arena",    "name": f"{city} Arena",    "lat": lat - 0.006,   "lon": lon + 0.008,   "base_score": 30, "poi_type": "venue"},
-            {"id": "nord",     "name": f"{city} Nord",     "lat": lat + 0.015,   "lon": lon,           "base_score": 28, "poi_type": "city_center"},
-            {"id": "syd",      "name": f"{city} Syd",      "lat": lat - 0.015,   "lon": lon,           "base_score": 25, "poi_type": "city_center"},
+            {"id": "centrum",  "name": f"{city} Centrum",  "lat": lat,           "lon": lon,           "base_score": 50, "poi_type": "city_center",   "address": f"{city} centrum"},
+            {"id": "station",  "name": f"{city} Station",  "lat": lat + 0.004,   "lon": lon - 0.007,   "base_score": 45, "poi_type": "transport_hub", "address": f"{city} station"},
+            {"id": "sygehus",  "name": f"{city} Sygehus",  "lat": lat + 0.010,   "lon": lon - 0.010,   "base_score": 42, "poi_type": "hospital",      "address": f"{city} sygehus"},
+            {"id": "arena",    "name": f"{city} Arena",    "lat": lat - 0.006,   "lon": lon + 0.008,   "base_score": 30, "poi_type": "venue",         "address": f"{city} arena"},
+            {"id": "nord",     "name": f"{city} Nord",     "lat": lat + 0.015,   "lon": lon,           "base_score": 28, "poi_type": "city_center",   "address": f"{city} nord"},
+            {"id": "syd",      "name": f"{city} Syd",      "lat": lat - 0.015,   "lon": lon,           "base_score": 25, "poi_type": "city_center",   "address": f"{city} syd"},
         ]
 
     # ── Lokationer (POI) ─────────────────────────────────────────────────────

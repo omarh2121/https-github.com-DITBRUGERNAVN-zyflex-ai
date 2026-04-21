@@ -120,6 +120,40 @@ def run_agents(body: dict = {}):
     return {"status": "started", "city": city}
 
 
+@app.post("/api/feedback")
+def driver_feedback(body: dict = {}):
+    """Chauffør rapporterer 'ingen kunder her' – gemmes til historisk læring."""
+    zone    = body.get("zone", "ukendt")
+    action  = body.get("action", "no_customers")   # no_customers | busy | good
+    comment = body.get("comment", "")
+
+    feedback_file = BASE_DIR / "data" / "driver_feedback.json"
+    feedback_file.parent.mkdir(parents=True, exist_ok=True)
+
+    existing = []
+    if feedback_file.exists():
+        try:
+            existing = json.loads(feedback_file.read_text(encoding="utf-8"))
+        except Exception:
+            existing = []
+
+    entry = {
+        "zone":      zone,
+        "action":    action,
+        "comment":   comment,
+        "timestamp": datetime.now().isoformat(),
+        "hour":      datetime.now().hour,
+        "weekday":   datetime.now().weekday(),
+    }
+    existing.append(entry)
+    # Behold kun de 500 nyeste
+    existing = existing[-500:]
+    feedback_file.write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    logger.info(f"[Feedback] {zone}: {action}")
+    return {"status": "ok", "message": f"Feedback gemt for {zone}"}
+
+
 # ── Agent-orchestrator (kører i baggrundstråd) ────────────────────────────────
 
 def _run_all_agents(city: str):
@@ -180,6 +214,16 @@ def _run_all_agents(city: str):
         report["alerts"] = _detect_alerts(report)
         LATEST_REPORT = report
         _save_report(LATEST_REPORT)
+
+        # Push notifikation hvis score >= 80
+        top = analysis_result.get("top_zones", [{}])[0]
+        if top.get("score", 0) >= 80:
+            _send_push(
+                title=f"GO NOW - {top.get('name', 'Hotspot')}",
+                message=f"Score {top.get('score')}/100 - Kør hertil nu! {top.get('reason', '')}",
+                priority="urgent",
+            )
+
         logger.info(f"✅ Alle agenter færdige for '{city}'")
 
     except Exception as e:
@@ -313,6 +357,40 @@ def _save_report(report: dict):
         json.dump(report, f, ensure_ascii=False, indent=2, default=str)
 
 
+def _send_push(title: str, message: str, priority: str = "high"):
+    """Send push-notifikation via ntfy.sh – gratis, ingen konto nødvendig."""
+    try:
+        import urllib.request as ur
+        channel = os.environ.get("NTFY_CHANNEL", "zyflex-horsens-42x9")
+        req = ur.Request(
+            f"https://ntfy.sh/{channel}",
+            data=message.encode("utf-8"),
+            headers={
+                "Title":    title,
+                "Priority": priority,
+                "Tags":     "taxi,denmark",
+            },
+            method="POST",
+        )
+        ur.urlopen(req, timeout=5)
+        logger.info(f"[Push] Sendt: {title}")
+    except Exception as e:
+        logger.warning(f"[Push] Fejlede: {e}")
+
+
+def _auto_refresh_loop():
+    """Kør agenter automatisk hver 30. minut."""
+    time.sleep(60)   # Vent 1 min efter opstart
+    while True:
+        try:
+            if not IS_RUNNING:
+                logger.info("[AutoRefresh] Opdaterer data...")
+                _run_all_agents("Horsens")
+        except Exception as e:
+            logger.error(f"[AutoRefresh] Fejl: {e}")
+        time.sleep(30 * 60)   # 30 minutter
+
+
 # ── Serve dashboard statisk (valgfrit) ───────────────────────────────────────
 dashboard_dir = BASE_DIR / "dashboard"
 if dashboard_dir.exists():
@@ -338,6 +416,8 @@ if __name__ == "__main__":
 
     # Kør automatisk ved opstart for Horsens
     threading.Thread(target=_run_all_agents, args=("Horsens",), daemon=True).start()
+    # Auto-refresh hver 30. minut
+    threading.Thread(target=_auto_refresh_loop, daemon=True).start()
 
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning")
