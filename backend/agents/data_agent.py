@@ -26,6 +26,17 @@ _LOCAL_EVENTS_FILE = os.path.join(
 
 logger = logging.getLogger(__name__)
 
+# Importer EventAgent (live scraping)
+try:
+    from agents.event_agent import EventAgent
+    _EVENT_AGENT_AVAILABLE = True
+except ImportError:
+    try:
+        from event_agent import EventAgent
+        _EVENT_AGENT_AVAILABLE = True
+    except ImportError:
+        _EVENT_AGENT_AVAILABLE = False
+
 # ── Hardcodet lookup til hurtig dansk geocoding ───────────────────────────────
 DANISH_CITIES = {
     "horsens":      (55.8615, 9.8506),
@@ -168,15 +179,27 @@ class DataAgent:
     def _fetch_events(self, city: str) -> list:
         """
         Henter events:
-        1. Altid: lokale events fra data/events.json
-        2. Ticketmaster hvis API-nøgle er sat i .env
-        3. Fallback mock hvis ingen nøgle og ingen lokale events
+        1. Live scraping via EventAgent (AC Horsens, CASA Arena, Billetto, Eventbrite)
+        2. Lokale events fra data/events.json
+        3. Ticketmaster hvis API-nøgle er sat i .env
+        4. Fallback mock hvis ingen andre kilder virker
         """
+        # 1. Live events via EventAgent
+        live_events = []
+        if _EVENT_AGENT_AVAILABLE:
+            try:
+                ea = EventAgent(status_callback=self.status_callback)
+                live_events = ea.run(city)
+                logger.info(f"[EventAgent] {len(live_events)} live events hentet")
+            except Exception as e:
+                logger.warning(f"[EventAgent] Fejlede: {e}")
+
         local = self._load_local_events(city)
 
         if not TICKETMASTER_API_KEY:
-            logger.info("Ingen Ticketmaster nøgle – tilføj TICKETMASTER_API_KEY i .env")
-            return local if local else self._mock_events(city)
+            logger.info("Ingen Ticketmaster nøgle – bruger live + lokale events")
+            combined = live_events + local
+            return combined if combined else self._mock_events(city)
 
         try:
             self._update(f"Henter rigtige events fra Ticketmaster for {city}...")
@@ -237,13 +260,14 @@ class DataAgent:
                 })
 
             logger.info(f"Ticketmaster: {len(out)} rigtige events hentet for '{city}'")
-            merged = local + out   # lokale events kommer først
-            logger.info(f"📅 Samlet events: {len(merged)} ({len(local)} lokale + {len(out)} Ticketmaster)")
+            merged = live_events + local + out
+            logger.info(f"Samlet events: {len(merged)} ({len(live_events)} live + {len(local)} lokale + {len(out)} Ticketmaster)")
             return merged
 
         except Exception as e:
-            logger.warning(f"Ticketmaster fejl: {e} – bruger mock")
-            return local if local else self._mock_events(city)
+            logger.warning(f"Ticketmaster fejl: {e} – bruger live+lokale")
+            combined = live_events + local
+            return combined if combined else self._mock_events(city)
 
     def _estimate_attendance_from_event(self, evt: dict) -> int:
         """Estimér antal tilskuere baseret på event-type og metadata."""
