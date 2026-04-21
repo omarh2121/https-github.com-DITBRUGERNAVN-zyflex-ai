@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Fodboldkamp – AC Horsens vs. gæstehold",
+    "venue": "CASA Arena",
+    "city": "Horsens",
+    "date": "2026-04-15",
+    "time": "19:00",
+    "expected_attendance": 8000,
+    "genre": "sport",
+    "lat_offset": 0.005,
+    "lon_offset": 0.002
+  },
+  {
+    "name": "Koncert – XYZ",
+    "venue": "Horsens Arena",
+    "city": "Horsens",
+    "date": "2026-04-15",
+    "time": "21:00",
+    "expected_attendance": 3000,
+    "genre": "music",
+    "lat_offset": 0.003,
+    "lon_offset": -0.001
+  }
+]

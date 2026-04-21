@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: zyflex-ai
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: PYTHONIOENCODING
+        value: utf-8
+      - key: TICKETMASTER_API_KEY
+        value: ""

@@ -1,0 +1,26 @@
+timestamp,zone_id,zone_name,score,grade,top_reason,events_nearby
+2026-04-13T08:00:00,horsens_centrum,Horsens Centrum,82,🔴 Høj efterspørgsel,Morgenrush (8:00) – multiplikator 1.3x,0
+2026-04-13T08:00:00,horsens_station,Horsens Station,78,🔴 Høj efterspørgsel,Transport hub – rush hour boost,0
+2026-04-13T08:00:00,horsens_sygehus,Horsens Sygehus,65,🟡 Middel efterspørgsel,Sygehus – stabil efterspørgsel,0
+2026-04-13T08:00:00,horsens_sportscenter,Horsens Sportscenter / CASA Arena,44,🟢 Lav efterspørgsel,Ingen events i nærheden i dag,0
+2026-04-13T08:00:00,skanderborg_centrum,Skanderborg Centrum,41,🟢 Lav efterspørgsel,Basis efterspørgsel,0
+2026-04-13T21:29:46.533263,horsens_centrum,Horsens Centrum,81,🔴 Høj efterspørgsel,"Vejr OK: 12°C, ingen nedbør",2
+2026-04-13T21:29:46.533263,horsens_station,Horsens Station,75,🔴 Høj efterspørgsel,"Vejr OK: 12°C, ingen nedbør",2
+2026-04-13T21:29:46.533263,horsens_sportscenter,Horsens Sportscenter / CASA Arena,68,🟡 Middel efterspørgsel,"Vejr OK: 12°C, ingen nedbør",2
+2026-04-13T21:29:46.533263,horsens_sygehus,Horsens Sygehus,59,🟡 Middel efterspørgsel,"Vejr OK: 12°C, ingen nedbør",2
+2026-04-13T21:29:46.533263,ikast_centrum,Ikast Centrum,50,🟢 Lav efterspørgsel,"Vejr OK: 12°C, ingen nedbør",0
+2026-04-13T21:38:01.563592,horsens_centrum,Horsens Centrum,81,🔴 Høj efterspørgsel,"Vejr OK: 12°C, ingen nedbør",2
+2026-04-13T21:38:01.563592,horsens_station,Horsens Station,75,🔴 Høj efterspørgsel,"Vejr OK: 12°C, ingen nedbør",2
+2026-04-13T21:38:01.563592,horsens_sportscenter,Horsens Sportscenter / CASA Arena,68,🟡 Middel efterspørgsel,"Vejr OK: 12°C, ingen nedbør",2
+2026-04-13T21:38:01.563592,horsens_sygehus,Horsens Sygehus,59,🟡 Middel efterspørgsel,"Vejr OK: 12°C, ingen nedbør",2
+2026-04-13T21:38:01.563592,ikast_centrum,Ikast Centrum,50,🟢 Lav efterspørgsel,"Vejr OK: 12°C, ingen nedbør",0
+2026-04-13T23:40:51.569709,horsens_centrum,Horsens Centrum,88,🔴 Høj efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,2
+2026-04-13T23:40:51.569709,horsens_sportscenter,Horsens Sportscenter / CASA Arena,75,🔴 Høj efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,2
+2026-04-13T23:40:51.569709,horsens_sygehus,Horsens Sygehus,66,🟡 Middel efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,2
+2026-04-13T23:40:51.569709,horsens_station,Horsens Station,65,🟡 Middel efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,2
+2026-04-13T23:40:51.569709,ikast_centrum,Ikast Centrum,56,🟡 Middel efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,0
+2026-04-13T23:45:27.188726,horsens_centrum,Horsens Centrum,88,🔴 Høj efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,2
+2026-04-13T23:45:27.188726,horsens_station,Horsens Station,81,🔴 Høj efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,2
+2026-04-13T23:45:27.188726,horsens_sportscenter,Horsens Sportscenter / CASA Arena,75,🔴 Høj efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,2
+2026-04-13T23:45:27.188726,horsens_sygehus,Horsens Sygehus,66,🟡 Middel efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,2
+2026-04-13T23:45:27.188726,ikast_centrum,Ikast Centrum,56,🟡 Middel efterspørgsel,Let regn (0.7 mm/t) – taxi-efterspørgsel stiger,0
