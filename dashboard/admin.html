@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zyflex AI – Admin</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0a0a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; padding:24px; }
+  .hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
+  .hdr-title { font-size:1.4rem; font-weight:900; }
+  .hdr-sub { color:#666; font-size:.85rem; }
+  .stats-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:28px; }
+  .stat-card { background:#111; border:1px solid #222; border-radius:14px; padding:18px 22px; flex:1; min-width:140px; }
+  .stat-num { font-size:2rem; font-weight:900; }
+  .stat-lbl { color:#666; font-size:.8rem; margin-top:4px; }
+  .stat-card.red .stat-num { color:#ff4444; }
+  .stat-card.green .stat-num { color:#44ff88; }
+  .stat-card.yellow .stat-num { color:#f5a623; }
+  .search-row { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+  .search-input {
+    flex:1; background:#1a1a1a; border:1px solid #333; border-radius:10px;
+    padding:11px 16px; color:#fff; font-size:.9rem; outline:none; min-width:200px;
+  }
+  .search-input:focus { border-color:#f5a623; }
+  .filter-btn {
+    background:#1a1a1a; border:1px solid #333; border-radius:10px;
+    padding:10px 18px; color:#aaa; cursor:pointer; font-size:.85rem;
+    transition:all .2s;
+  }
+  .filter-btn.active { background:#f5a623; border-color:#f5a623; color:#000; font-weight:700; }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; color:#555; font-size:.75rem; font-weight:600; padding:10px 12px; border-bottom:1px solid #1a1a1a; text-transform:uppercase; letter-spacing:.05em; }
+  td { padding:13px 12px; border-bottom:1px solid #111; font-size:.88rem; vertical-align:middle; }
+  tr:hover td { background:#0f0f0f; }
+  .badge { display:inline-block; border-radius:6px; padding:3px 10px; font-size:.75rem; font-weight:700; }
+  .badge-active { background:#002200; color:#44ff88; }
+  .badge-suspended { background:#220000; color:#ff4444; }
+  .badge-trial { background:#221a00; color:#f5a623; }
+  .badge-paid { background:#002200; color:#44ff88; }
+  .badge-unpaid { background:#220000; color:#ff4444; }
+  .action-btn {
+    border:none; border-radius:7px; padding:6px 14px; font-size:.78rem;
+    cursor:pointer; font-weight:700; margin:2px;
+  }
+  .btn-suspend { background:#330000; color:#ff4444; }
+  .btn-activate { background:#003300; color:#44ff88; }
+  .btn-invoice { background:#221a00; color:#f5a623; }
+  .btn-paid { background:#002200; color:#44ff88; }
+  .btn-kick { background:#440000; color:#ff2222; }
+  .section-title { font-size:1rem; font-weight:700; margin:24px 0 14px; color:#aaa; }
+  .empty { color:#444; text-align:center; padding:40px; font-size:.9rem; }
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:100; align-items:center; justify-content:center; }
+  .modal-bg.open { display:flex; }
+  .modal { background:#111; border:1px solid #333; border-radius:16px; padding:32px; max-width:440px; width:90%; }
+  .modal h3 { margin-bottom:16px; }
+  .modal input { width:100%; background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:10px 14px; color:#fff; margin-bottom:12px; outline:none; }
+  .modal-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+  .modal-cancel { background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:9px 20px; color:#aaa; cursor:pointer; }
+  .modal-confirm { background:#f5a623; border:none; border-radius:8px; padding:9px 20px; color:#000; font-weight:700; cursor:pointer; }
+  .tabs { display:flex; gap:4px; margin-bottom:20px; }
+  .tab { background:#111; border:1px solid #1a1a1a; border-radius:8px; padding:8px 18px; cursor:pointer; font-size:.85rem; color:#666; }
+  .tab.active { background:#1a1a1a; border-color:#333; color:#fff; font-weight:700; }
+  .logout-btn { background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:8px 16px; color:#666; cursor:pointer; font-size:.82rem; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">🚕 Zyflex AI – Admin Panel</div>
+    <div class="hdr-sub" id="admin-name">Indlæser...</div>
+  </div>
+  <button class="logout-btn" onclick="logout()">Log ud</button>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-num" id="stat-total">–</div>
+    <div class="stat-lbl">Firmaer i alt</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-num" id="stat-active">–</div>
+    <div class="stat-lbl">Aktive</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-num" id="stat-unpaid">–</div>
+    <div class="stat-lbl">Ikke betalt</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="stat-num" id="stat-revenue">–</div>
+    <div class="stat-lbl">Månedsindtægt</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('companies', this)">Firmaer</div>
+  <div class="tab" onclick="switchTab('invoices', this)">Fakturaer</div>
+  <div class="tab" onclick="switchTab('requests', this)">Anmodninger</div>
+</div>
+
+<!-- Search -->
+<div class="search-row">
+  <input class="search-input" id="search-input" placeholder="Søg firma, navn eller email..." oninput="filterTable()">
+  <button class="filter-btn active" id="filter-all" onclick="setFilter('all', this)">Alle</button>
+  <button class="filter-btn" id="filter-active" onclick="setFilter('active', this)">Aktive</button>
+  <button class="filter-btn" id="filter-unpaid" onclick="setFilter('unpaid', this)">Ikke betalt</button>
+  <button class="filter-btn" id="filter-suspended" onclick="setFilter('suspended', this)">Suspenderet</button>
+</div>
+
+<!-- Companies tab -->
+<div id="tab-companies">
+  <table id="companies-table">
+    <thead>
+      <tr>
+        <th>Firma</th><th>Kontakt</th><th>By</th><th>Status</th><th>Oprettet</th><th>Handlinger</th>
+      </tr>
+    </thead>
+    <tbody id="companies-body">
+      <tr><td colspan="6" class="empty">Indlæser...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Invoices tab -->
+<div id="tab-invoices" style="display:none">
+  <button class="action-btn btn-invoice" style="margin-bottom:16px; padding:10px 20px; font-size:.9rem" onclick="openInvoiceModal()">+ Opret ny faktura</button>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Firma</th><th>Måned</th><th>Beløb</th><th>Sendt</th><th>Betalt</th><th>Handling</th></tr>
+    </thead>
+    <tbody id="invoices-body">
+      <tr><td colspan="7" class="empty">Indlæser...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Requests tab -->
+<div id="tab-requests" style="display:none">
+  <table>
+    <thead>
+      <tr><th>Navn</th><th>Firma</th><th>Email</th><th>Telefon</th><th>By</th><th>Dato</th><th>Handling</th></tr>
+    </thead>
+    <tbody id="requests-body">
+      <tr><td colspan="7" class="empty">Indlæser...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Invoice modal -->
+<div class="modal-bg" id="invoice-modal">
+  <div class="modal">
+    <h3>Opret faktura</h3>
+    <select id="inv-company-select" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;color:#fff;margin-bottom:12px;outline:none;"></select>
+    <input type="text" id="inv-month" placeholder="Måned (fx Maj 2026)">
+    <input type="number" id="inv-amount" placeholder="Beløb i kr (fx 499)">
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Annuller</button>
+      <button class="modal-confirm" onclick="createInvoice()">Opret faktura</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = window.location.origin;
+const TOKEN    = localStorage.getItem("zyflex_token");
+let allCompanies = [], allInvoices = [], allRequests = [];
+let currentFilter = "all", currentTab = "companies";
+
+if (!TOKEN) { window.location.href = "/login"; }
+
+async function api(path, opts={}) {
+  const r = await fetch(`${API_BASE}${path}`, {
+    ...opts,
+    headers: { "Authorization": `Bearer ${TOKEN}`, "Content-Type": "application/json", ...(opts.headers||{}) }
+  });
+  if (r.status === 401) { window.location.href = "/login"; return null; }
+  return r.json();
+}
+
+async function loadAll() {
+  const me = await api("/api/auth/me");
+  if (!me || !me.is_admin) { window.location.href = "/"; return; }
+  document.getElementById("admin-name").textContent = `Logget ind som ${me.name} (${me.email})`;
+
+  const [companies, invoices, requests] = await Promise.all([
+    api("/api/admin/companies"),
+    api("/api/admin/invoices"),
+    api("/api/admin/requests"),
+  ]);
+  allCompanies = companies?.companies || [];
+  allInvoices  = invoices?.invoices  || [];
+  allRequests  = requests?.requests  || [];
+
+  updateStats();
+  renderCompanies();
+  renderInvoices();
+  renderRequests();
+}
+
+function updateStats() {
+  const active   = allCompanies.filter(c => c.status === "active").length;
+  const suspended= allCompanies.filter(c => c.status === "suspended").length;
+  const unpaidInv= allInvoices.filter(i => !i.paid).length;
+  const revenue  = allCompanies.filter(c => c.status === "active" && c.plan === "paid").length * 499;
+  document.getElementById("stat-total").textContent   = allCompanies.length;
+  document.getElementById("stat-active").textContent  = active;
+  document.getElementById("stat-unpaid").textContent  = unpaidInv;
+  document.getElementById("stat-revenue").textContent = revenue > 0 ? `${revenue} kr` : "0 kr";
+}
+
+function renderCompanies(filtered = null) {
+  const list = filtered ?? getFiltered();
+  const tbody = document.getElementById("companies-body");
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Ingen firmaer fundet</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(c => `
+    <tr data-email="${c.email}" data-status="${c.status}" data-company="${c.company?.toLowerCase()}" data-name="${c.name?.toLowerCase()}">
+      <td><strong>${c.company}</strong></td>
+      <td>${c.name}<br><span style="color:#555;font-size:.8rem">${c.email}</span></td>
+      <td>${c.city || "–"}</td>
+      <td><span class="badge badge-${c.status}">${statusLabel(c.status)}</span></td>
+      <td style="color:#555;font-size:.82rem">${c.created_at || "–"}</td>
+      <td>
+        ${c.status === "active"
+          ? `<button class="action-btn btn-suspend" onclick="setStatus('${c.email}','suspended')">Suspender</button>`
+          : `<button class="action-btn btn-activate" onclick="setStatus('${c.email}','active')">Aktiver</button>`}
+        <button class="action-btn btn-invoice" onclick="openInvoiceFor('${c.email}','${c.company}')">Faktura</button>
+        <button class="action-btn btn-kick" onclick="kickCompany('${c.email}','${c.company}')">Smid ud</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function renderInvoices() {
+  const tbody = document.getElementById("invoices-body");
+  if (!allInvoices.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Ingen fakturaer endnu</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allInvoices.slice().reverse().map(inv => `
+    <tr>
+      <td style="color:#555;font-size:.8rem">${inv.id}</td>
+      <td><strong>${inv.company}</strong></td>
+      <td>${inv.month}</td>
+      <td>${inv.amount} kr</td>
+      <td style="color:#555;font-size:.8rem">${inv.sent_at}</td>
+      <td><span class="badge badge-${inv.paid?'paid':'unpaid'}">${inv.paid ? `Betalt ${inv.paid_at}` : "IKKE BETALT"}</span></td>
+      <td>${!inv.paid ? `<button class="action-btn btn-paid" onclick="markPaid('${inv.id}')">Marker betalt</button>` : ""}</td>
+    </tr>
+  `).join("");
+}
+
+function renderRequests() {
+  const tbody = document.getElementById("requests-body");
+  if (!allRequests.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Ingen nye anmodninger</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allRequests.map(r => `
+    <tr>
+      <td><strong>${r.name}</strong></td>
+      <td>${r.company}</td>
+      <td>${r.email}</td>
+      <td>${r.phone || "–"}</td>
+      <td>${r.city}</td>
+      <td style="color:#555;font-size:.8rem">${r.created_at}</td>
+      <td>
+        <button class="action-btn btn-activate" onclick="approveRequest('${r.email}','${r.name}','${r.company}','${r.city}')">Godkend</button>
+        <button class="action-btn btn-kick" onclick="deleteRequest('${r.email}')">Afvis</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function getFiltered() {
+  const q = document.getElementById("search-input").value.toLowerCase();
+  return allCompanies.filter(c => {
+    const matchSearch = !q || c.company?.toLowerCase().includes(q) || c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q);
+    const matchFilter = currentFilter === "all" || c.status === currentFilter ||
+      (currentFilter === "unpaid" && allInvoices.some(i => i.email === c.email && !i.paid));
+    return matchSearch && matchFilter;
+  });
+}
+
+function filterTable() { renderCompanies(); }
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderCompanies();
+}
+
+function statusLabel(s) {
+  return { active: "AKTIV", suspended: "SUSPENDERET", trial: "PRØVE" }[s] || s.toUpperCase();
+}
+
+async function setStatus(email, status) {
+  if (status === "suspended" && !confirm(`Suspender ${email}? De mister adgang med det samme.`)) return;
+  await api("/api/admin/company/status", { method:"POST", body: JSON.stringify({ email, status }) });
+  await loadAll();
+}
+
+async function kickCompany(email, company) {
+  if (!confirm(`SLET ${company} (${email}) permanent? Dette kan ikke fortrydes.`)) return;
+  await api("/api/admin/company/kick", { method:"POST", body: JSON.stringify({ email }) });
+  await loadAll();
+}
+
+async function markPaid(invoice_id) {
+  await api("/api/admin/invoice/paid", { method:"POST", body: JSON.stringify({ invoice_id }) });
+  await loadAll();
+}
+
+let invoiceTargetEmail = "", invoiceTargetCompany = "";
+function openInvoiceFor(email, company) {
+  invoiceTargetEmail   = email;
+  invoiceTargetCompany = company;
+  document.getElementById("invoice-modal").classList.add("open");
+  const now = new Date();
+  document.getElementById("inv-month").value = now.toLocaleString("da-DK", {month:"long", year:"numeric"});
+  document.getElementById("inv-amount").value = "499";
+}
+function openInvoiceModal() {
+  invoiceTargetEmail = "";
+  const sel = document.getElementById("inv-company-select");
+  sel.innerHTML = allCompanies.map(c => `<option value="${c.email}" data-company="${c.company}">${c.company} (${c.email})</option>`).join("");
+  sel.style.display = "block";
+  document.getElementById("invoice-modal").classList.add("open");
+}
+function closeModal() { document.getElementById("invoice-modal").classList.remove("open"); }
+
+async function createInvoice() {
+  const sel     = document.getElementById("inv-company-select");
+  const email   = invoiceTargetEmail || sel.value;
+  const company = invoiceTargetCompany || sel.options[sel.selectedIndex]?.dataset.company || email;
+  const month   = document.getElementById("inv-month").value;
+  const amount  = parseInt(document.getElementById("inv-amount").value);
+  if (!email || !month || !amount) { alert("Udfyld alle felter"); return; }
+  await api("/api/admin/invoice/create", { method:"POST", body: JSON.stringify({ email, company, amount, month }) });
+  closeModal();
+  await loadAll();
+  switchTab("invoices", document.querySelectorAll(".tab")[1]);
+}
+
+async function approveRequest(email, name, company, city) {
+  await api("/api/admin/company/approve", { method:"POST", body: JSON.stringify({ email, name, company, city }) });
+  await loadAll();
+}
+
+async function deleteRequest(email) {
+  await api("/api/admin/request/delete", { method:"POST", body: JSON.stringify({ email }) });
+  await loadAll();
+}
+
+function switchTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  ["companies","invoices","requests"].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none";
+  });
+}
+
+function logout() {
+  localStorage.removeItem("zyflex_token");
+  window.location.href = "/login";
+}
+
+loadAll();
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>

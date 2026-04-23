@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zyflex AI – Opret konto</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0a0a0a; color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #111; border: 1px solid #222; border-radius: 20px;
+    padding: 40px 36px; width: 100%; max-width: 460px;
+  }
+  .logo { font-size: 2rem; text-align:center; margin-bottom: 6px; }
+  .title { font-size: 1.4rem; font-weight: 900; text-align:center; margin-bottom: 4px; }
+  .sub { color: #666; font-size: .85rem; text-align:center; margin-bottom: 32px; }
+  label { display: block; color: #aaa; font-size: .8rem; margin-bottom: 6px; margin-top: 16px; }
+  input {
+    width: 100%; background: #1a1a1a; border: 1px solid #333; border-radius: 10px;
+    padding: 12px 16px; color: #fff; font-size: .95rem; outline: none;
+    transition: border .2s;
+  }
+  input:focus { border-color: #f5a623; }
+  .city-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .city-btn {
+    background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+    padding: 8px 16px; color: #aaa; cursor: pointer; font-size: .85rem;
+    transition: all .2s;
+  }
+  .city-btn.active { background: #f5a623; border-color: #f5a623; color: #000; font-weight: 700; }
+  .submit-btn {
+    background: #f5a623; color: #000; border: none; border-radius: 12px;
+    padding: 16px; font-size: 1rem; font-weight: 900; cursor: pointer;
+    width: 100%; margin-top: 28px; transition: opacity .2s;
+  }
+  .submit-btn:hover { opacity: .9; }
+  .submit-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .note { color: #555; font-size: .75rem; text-align: center; margin-top: 16px; }
+  .success { background: #001a00; border: 1px solid #0f0; border-radius: 10px;
+             padding: 20px; text-align: center; display: none; }
+  .error-msg { background: #1a0000; border: 1px solid #f00; border-radius: 8px;
+               padding: 10px; color: #ff6666; font-size: .82rem; margin-top: 12px; display:none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🚕</div>
+  <div class="title">Opret Zyflex AI konto</div>
+  <div class="sub">Udfyld dine oplysninger – Mo kontakter dig med adgang</div>
+
+  <div class="success" id="success-box">
+    <div style="font-size:2rem">✅</div>
+    <div style="font-weight:700; margin:10px 0">Anmodning sendt!</div>
+    <div style="color:#aaa; font-size:.85rem">Mo vil kontakte dig inden for 24 timer med din faktura og adgang.</div>
+  </div>
+
+  <form id="reg-form">
+    <label>Dit navn</label>
+    <input type="text" id="f-name" placeholder="Fx Lars Nielsen" required>
+
+    <label>Firmanavn</label>
+    <input type="text" id="f-company" placeholder="Fx Lars Taxi ApS" required>
+
+    <label>Email</label>
+    <input type="email" id="f-email" placeholder="lars@firma.dk" required>
+
+    <label>Telefon</label>
+    <input type="tel" id="f-phone" placeholder="+45 12 34 56 78">
+
+    <label>By (vælg din driftszone)</label>
+    <div class="city-row" id="city-row">
+      <button type="button" class="city-btn active" onclick="selectCity(this,'Horsens')">Horsens</button>
+      <button type="button" class="city-btn" onclick="selectCity(this,'Aarhus')">Aarhus</button>
+      <button type="button" class="city-btn" onclick="selectCity(this,'Vejle')">Vejle</button>
+      <button type="button" class="city-btn" onclick="selectCity(this,'Silkeborg')">Silkeborg</button>
+      <button type="button" class="city-btn" onclick="selectCity(this,'Skanderborg')">Skanderborg</button>
+      <button type="button" class="city-btn" onclick="selectCity(this,'Anden by')">Anden by</button>
+    </div>
+
+    <label id="custom-city-label" style="display:none">Skriv din by</label>
+    <input type="text" id="f-custom-city" placeholder="Din by..." style="display:none; margin-top:8px">
+
+    <div class="error-msg" id="err-msg"></div>
+
+    <button type="submit" class="submit-btn" id="submit-btn">Send anmodning</button>
+  </form>
+
+  <div class="note">Efter godkendelse modtager du en månedlig faktura på 499 kr/md pr. bil.</div>
+</div>
+
+<script>
+const API_BASE = window.location.origin;
+let selectedCity = "Horsens";
+
+function selectCity(btn, city) {
+  document.querySelectorAll(".city-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  selectedCity = city;
+  const customLabel = document.getElementById("custom-city-label");
+  const customInput = document.getElementById("f-custom-city");
+  if (city === "Anden by") {
+    customLabel.style.display = "block";
+    customInput.style.display = "block";
+    selectedCity = "";
+  } else {
+    customLabel.style.display = "none";
+    customInput.style.display = "none";
+  }
+}
+
+document.getElementById("reg-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Sender...";
+
+  const name    = document.getElementById("f-name").value.trim();
+  const company = document.getElementById("f-company").value.trim();
+  const email   = document.getElementById("f-email").value.trim();
+  const phone   = document.getElementById("f-phone").value.trim();
+  const city    = selectedCity || document.getElementById("f-custom-city").value.trim() || "Ukendt";
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, company, email, phone, city })
+    });
+    const data = await resp.json();
+    if (data.status === "ok") {
+      document.getElementById("reg-form").style.display = "none";
+      document.getElementById("success-box").style.display = "block";
+    } else {
+      showError(data.message || "Noget gik galt – prøv igen");
+      btn.disabled = false;
+      btn.textContent = "Send anmodning";
+    }
+  } catch(e) {
+    showError("Kunne ikke forbinde – prøv igen");
+    btn.disabled = false;
+    btn.textContent = "Send anmodning";
+  }
+});
+
+function showError(msg) {
+  const el = document.getElementById("err-msg");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+</script>
+</body>
+</html>

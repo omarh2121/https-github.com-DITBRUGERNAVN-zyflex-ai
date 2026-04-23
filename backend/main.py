@@ -29,10 +29,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import uvicorn
 
+from fastapi import Request
 from agents.data_agent     import DataAgent
 from agents.analysis_agent import AnalysisAgent
 from agents.sales_agent    import SalesAgent
 from agents.ops_agent      import OpsAgent
+import auth as auth_module
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -152,6 +154,245 @@ def driver_feedback(body: dict = {}):
 
     logger.info(f"[Feedback] {zone}: {action}")
     return {"status": "ok", "message": f"Feedback gemt for {zone}"}
+
+
+# ── Auth helpers ─────────────────────────────────────────────────────────────
+
+def _get_token(request: Request) -> str:
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        return auth[7:]
+    return request.cookies.get("zyflex_token", "")
+
+def _require_session(request: Request):
+    tok = _get_token(request)
+    s   = auth_module.get_session(tok)
+    if not s:
+        from fastapi.responses import JSONResponse
+        return None, JSONResponse({"error": "Ikke logget ind"}, status_code=401)
+    return s, None
+
+def _require_admin(request: Request):
+    s, err = _require_session(request)
+    if err:
+        return None, err
+    if not auth_module.is_admin(s["email"]):
+        from fastapi.responses import JSONResponse
+        return None, JSONResponse({"error": "Ingen adgang"}, status_code=403)
+    return s, None
+
+
+# ── Auth endpoints ────────────────────────────────────────────────────────────
+
+@app.get("/api/auth/config")
+def auth_config():
+    return {"google_client_id": os.environ.get("GOOGLE_CLIENT_ID", "")}
+
+@app.get("/api/auth/callback")
+async def google_callback(request: Request):
+    """Modtag Google OAuth code og opret session."""
+    from fastapi.responses import RedirectResponse
+    code = request.query_params.get("code")
+    if not code:
+        return RedirectResponse("/login?error=no_code")
+
+    client_id     = os.environ.get("GOOGLE_CLIENT_ID", "")
+    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+    redirect_uri  = str(request.base_url) + "api/auth/callback"
+
+    try:
+        import requests as req
+        # Exchang code for tokens
+        tok_resp = req.post("https://oauth2.googleapis.com/token", data={
+            "code":          code,
+            "client_id":     client_id,
+            "client_secret": client_secret,
+            "redirect_uri":  redirect_uri,
+            "grant_type":    "authorization_code",
+        }, timeout=10)
+        tok_data = tok_resp.json()
+        id_token = tok_data.get("id_token")
+        if not id_token:
+            return RedirectResponse("/login?error=no_token")
+
+        user = auth_module.verify_google_token(id_token)
+        if not user:
+            return RedirectResponse("/login?error=invalid_token")
+
+        # Tjek om firma eksisterer
+        company = auth_module.get_company(user["email"])
+        if not company and not auth_module.is_admin(user["email"]):
+            # Ny bruger – send til registrering
+            session_tok = auth_module.create_session(user)
+            resp = RedirectResponse("/register")
+            resp.set_cookie("zyflex_token", session_tok, max_age=86400*30, httponly=False)
+            return resp
+
+        # Opret session
+        session_tok = auth_module.create_session(user)
+        target = "/admin" if auth_module.is_admin(user["email"]) else "/"
+        resp = RedirectResponse(target)
+        resp.set_cookie("zyflex_token", session_tok, max_age=86400*30, httponly=False)
+        # Sæt også i JS-tilgængeligt cookie
+        resp.headers["X-Auth-Token"] = session_tok
+        return resp
+
+    except Exception as e:
+        logger.error(f"OAuth callback fejl: {e}")
+        return RedirectResponse("/login?error=server")
+
+@app.get("/api/auth/me")
+async def auth_me(request: Request):
+    s, err = _require_session(request)
+    if err:
+        return err
+    company = auth_module.get_company(s["email"])
+    return {
+        "email":    s["email"],
+        "name":     s["name"],
+        "picture":  s.get("picture", ""),
+        "is_admin": auth_module.is_admin(s["email"]),
+        "company":  company,
+        "status":   company.get("status", "unknown") if company else "no_company",
+    }
+
+@app.post("/api/auth/logout")
+async def auth_logout(request: Request):
+    tok = _get_token(request)
+    auth_module.delete_session(tok)
+    return {"status": "ok"}
+
+
+# ── Register endpoint ─────────────────────────────────────────────────────────
+
+@app.post("/api/register")
+async def register(request: Request):
+    """Ny kunde registrerer sig – gemmes som anmodning til Mo."""
+    body = await request.json()
+    email   = body.get("email", "").strip().lower()
+    name    = body.get("name", "").strip()
+    company = body.get("company", "").strip()
+    city    = body.get("city", "Horsens").strip()
+    phone   = body.get("phone", "").strip()
+
+    if not email or not name or not company:
+        return {"status": "error", "message": "Udfyld alle felter"}
+
+    # Gem som anmodning (ikke aktiv endnu)
+    requests_file = BASE_DIR / "data" / "registration_requests.json"
+    existing = []
+    if requests_file.exists():
+        try:
+            existing = json.loads(requests_file.read_text(encoding="utf-8"))
+        except Exception:
+            existing = []
+
+    # Tjek om allerede registreret
+    if any(r["email"] == email for r in existing):
+        return {"status": "error", "message": "Email allerede registreret"}
+
+    existing.append({
+        "email": email, "name": name, "company": company,
+        "city": city, "phone": phone,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+    })
+    requests_file.write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+    logger.info(f"[Register] Ny anmodning: {company} ({email})")
+    return {"status": "ok"}
+
+
+# ── Admin endpoints ───────────────────────────────────────────────────────────
+
+@app.get("/api/admin/companies")
+async def admin_companies(request: Request):
+    _, err = _require_admin(request)
+    if err: return err
+    return {"companies": auth_module.get_all_companies()}
+
+@app.get("/api/admin/invoices")
+async def admin_invoices(request: Request):
+    _, err = _require_admin(request)
+    if err: return err
+    return {"invoices": auth_module.get_invoices()}
+
+@app.get("/api/admin/requests")
+async def admin_requests(request: Request):
+    _, err = _require_admin(request)
+    if err: return err
+    requests_file = BASE_DIR / "data" / "registration_requests.json"
+    reqs = []
+    if requests_file.exists():
+        try:
+            reqs = json.loads(requests_file.read_text(encoding="utf-8"))
+        except Exception:
+            reqs = []
+    return {"requests": reqs}
+
+@app.post("/api/admin/company/status")
+async def admin_set_status(request: Request):
+    _, err = _require_admin(request)
+    if err: return err
+    body = await request.json()
+    auth_module.update_company_status(body["email"], body["status"])
+    return {"status": "ok"}
+
+@app.post("/api/admin/company/kick")
+async def admin_kick(request: Request):
+    _, err = _require_admin(request)
+    if err: return err
+    body = await request.json()
+    companies = auth_module._read(auth_module.COMPANIES_FILE, {})
+    companies.pop(body["email"], None)
+    auth_module._write(auth_module.COMPANIES_FILE, companies)
+    return {"status": "ok"}
+
+@app.post("/api/admin/company/approve")
+async def admin_approve(request: Request):
+    _, err = _require_admin(request)
+    if err: return err
+    body = await request.json()
+    auth_module.create_company(body["email"], body["name"], body["company"], body.get("city","Horsens"))
+    # Fjern fra anmodninger
+    requests_file = BASE_DIR / "data" / "registration_requests.json"
+    if requests_file.exists():
+        try:
+            reqs = json.loads(requests_file.read_text(encoding="utf-8"))
+            reqs = [r for r in reqs if r["email"] != body["email"]]
+            requests_file.write_text(json.dumps(reqs, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+    return {"status": "ok"}
+
+@app.post("/api/admin/request/delete")
+async def admin_delete_request(request: Request):
+    _, err = _require_admin(request)
+    if err: return err
+    body = await request.json()
+    requests_file = BASE_DIR / "data" / "registration_requests.json"
+    if requests_file.exists():
+        try:
+            reqs = json.loads(requests_file.read_text(encoding="utf-8"))
+            reqs = [r for r in reqs if r["email"] != body["email"]]
+            requests_file.write_text(json.dumps(reqs, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+    return {"status": "ok"}
+
+@app.post("/api/admin/invoice/create")
+async def admin_create_invoice(request: Request):
+    _, err = _require_admin(request)
+    if err: return err
+    body = await request.json()
+    inv = auth_module.create_invoice(body["email"], body["company"], body["amount"], body["month"])
+    return {"status": "ok", "invoice": inv}
+
+@app.post("/api/admin/invoice/paid")
+async def admin_mark_paid(request: Request):
+    _, err = _require_admin(request)
+    if err: return err
+    body = await request.json()
+    auth_module.mark_invoice_paid(body["invoice_id"])
+    return {"status": "ok"}
 
 
 # ── Agent-orchestrator (kører i baggrundstråd) ────────────────────────────────
@@ -399,6 +640,18 @@ if dashboard_dir.exists():
     @app.get("/")
     def root():
         return FileResponse(str(dashboard_dir / "index.html"))
+
+    @app.get("/login")
+    def login_page():
+        return FileResponse(str(dashboard_dir / "login.html"))
+
+    @app.get("/register")
+    def register_page():
+        return FileResponse(str(dashboard_dir / "register.html"))
+
+    @app.get("/admin")
+    def admin_page():
+        return FileResponse(str(dashboard_dir / "admin.html"))
 
 
 # ── Start server ──────────────────────────────────────────────────────────────
