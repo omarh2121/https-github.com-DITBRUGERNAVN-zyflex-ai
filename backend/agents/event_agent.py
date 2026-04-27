@@ -33,6 +33,43 @@ HEADERS = {
 HORSENS_LAT = 55.8615
 HORSENS_LON = 9.8506
 
+# =============================================================================
+# DANSKE FESTIVALER 2026 – komplet liste fra festivalshoppen.dk
+# Inkl. GPS, besøgstal og afstand til Horsens
+# Festivals inden for ~80 km = direkte taxi-relevante
+# =============================================================================
+DANISH_FESTIVALS_2026 = [
+    # ── MEGET NÆR HORSENS (< 30 km) ────────────────────────────────────────
+    {"name": "Jelling Musikfestival",    "city": "Jelling",      "lat": 55.7448, "lon": 9.4248,  "start": "2026-05-21", "end": "2026-05-24", "attendance": 40000, "distance_km": 25, "category": "Festival"},
+    {"name": "Smukfest",                 "city": "Skanderborg",  "lat": 56.0431, "lon": 9.9270,  "start": "2026-08-02", "end": "2026-08-09", "attendance": 55000, "distance_km": 22, "category": "Festival"},
+    {"name": "Sølund Festival",          "city": "Skanderborg",  "lat": 56.0431, "lon": 9.9270,  "start": "2026-06-11", "end": "2026-06-13", "attendance": 20000, "distance_km": 22, "category": "Festival"},
+    {"name": "Mosstock Festival",        "city": "Skanderborg",  "lat": 56.0431, "lon": 9.9270,  "start": "2026-07-24", "end": "2026-07-26", "attendance": 2000,  "distance_km": 22, "category": "Festival"},
+
+    # ── NÆR HORSENS (30-60 km) ─────────────────────────────────────────────
+    {"name": "Hede Rytmer",              "city": "Silkeborg",    "lat": 56.1697, "lon": 9.5485,  "start": "2026-05-28", "end": "2026-05-30", "attendance": 6000,  "distance_km": 40, "category": "Festival"},
+    {"name": "NorthSide Festival",       "city": "Aarhus",       "lat": 56.1629, "lon": 10.2039, "start": "2026-06-04", "end": "2026-06-06", "attendance": 35000, "distance_km": 45, "category": "Festival"},
+    {"name": "SPOT Festival",            "city": "Aarhus",       "lat": 56.1629, "lon": 10.2039, "start": "2026-05-01", "end": "2026-05-02", "attendance": 12000, "distance_km": 45, "category": "Festival"},
+    {"name": "Aarhus Jazz Festival",     "city": "Aarhus",       "lat": 56.1629, "lon": 10.2039, "start": "2026-06-11", "end": "2026-06-20", "attendance": 15000, "distance_km": 45, "category": "Festival"},
+    {"name": "Grimfest",                 "city": "Aarhus",       "lat": 56.1629, "lon": 10.2039, "start": "2026-08-01", "end": "2026-08-03", "attendance": 2500,  "distance_km": 45, "category": "Festival"},
+    {"name": "Herning Rocker",           "city": "Herning",      "lat": 56.1396, "lon": 8.9771,  "start": "2026-05-24", "end": "2026-05-25", "attendance": 10000, "distance_km": 55, "category": "Festival"},
+    {"name": "Rock under broen",         "city": "Middelfart",   "lat": 55.5072, "lon": 9.7365,  "start": "2026-06-06", "end": "2026-06-07", "attendance": 20000, "distance_km": 60, "category": "Festival"},
+    {"name": "Thy Rock",                 "city": "Thisted",      "lat": 56.9576, "lon": 8.6938,  "start": "2026-06-27", "end": "2026-06-28", "attendance": 10000, "distance_km": 55, "category": "Festival"},
+
+    # ── ØVRIGE STORE DANSKE FESTIVALER ─────────────────────────────────────
+    {"name": "Roskilde Festival",        "city": "Roskilde",     "lat": 55.6441, "lon": 12.0803, "start": "2026-06-27", "end": "2026-07-04", "attendance": 131000,"distance_km": 200,"category": "Festival"},
+    {"name": "Smukfest",                 "city": "Skanderborg",  "lat": 56.0431, "lon": 9.9270,  "start": "2026-08-02", "end": "2026-08-09", "attendance": 55000, "distance_km": 22, "category": "Festival"},
+    {"name": "Tinderbox",                "city": "Odense",       "lat": 55.4038, "lon": 10.4024, "start": "2026-06-25", "end": "2026-06-27", "attendance": 45000, "distance_km": 90, "category": "Festival"},
+    {"name": "Distortion",              "city": "København",    "lat": 55.6761, "lon": 12.5683, "start": "2026-05-28", "end": "2026-06-02", "attendance": 300000,"distance_km": 230,"category": "Festival"},
+    {"name": "COPENHELL",               "city": "København",    "lat": 55.6761, "lon": 12.5683, "start": "2026-06-11", "end": "2026-06-14", "attendance": 25000, "distance_km": 230,"category": "Festival"},
+    {"name": "Heartland Festival",      "city": "Kværndrup",    "lat": 55.2333, "lon": 10.4500, "start": "2026-06-18", "end": "2026-06-20", "attendance": 20000, "distance_km": 100,"category": "Festival"},
+    {"name": "Grøn Koncert",            "city": "Horsens",      "lat": 55.8615, "lon": 9.8506,  "start": "2026-07-17", "end": "2026-07-27", "attendance": 25000, "distance_km": 0,  "category": "Festival"},
+    {"name": "Nibe Festival",           "city": "Nibe",         "lat": 56.9833, "lon": 9.6167,  "start": "2026-07-02", "end": "2026-07-05", "attendance": 25000, "distance_km": 130,"category": "Festival"},
+    {"name": "Tønder Festival",         "city": "Tønder",       "lat": 54.9333, "lon": 8.8667,  "start": "2026-08-26", "end": "2026-08-29", "attendance": 13000, "distance_km": 140,"category": "Festival"},
+    {"name": "Vi elsker 90erne",        "city": "Horsens",      "lat": 55.8615, "lon": 9.8506,  "start": "2026-06-19", "end": "2026-06-20", "attendance": 17000, "distance_km": 0,  "category": "Festival"},
+    {"name": "Alive Festival",          "city": "Thisted",      "lat": 56.9576, "lon": 8.6938,  "start": "2026-07-24", "end": "2026-07-26", "attendance": 2500,  "distance_km": 130,"category": "Festival"},
+    {"name": "Skive Festival",          "city": "Skive",        "lat": 56.5647, "lon": 9.0283,  "start": "2026-06-04", "end": "2026-06-07", "attendance": 12000, "distance_km": 60, "category": "Festival"},
+]
+
 
 class EventAgent:
     """
@@ -46,6 +83,9 @@ class EventAgent:
 
     def run(self, city: str = "Horsens") -> list:
         self.found = []
+        self._update("Henter danske festivaler 2026...")
+        self._load_danish_festivals(city)
+
         self._update("Henter AC Horsens kampprogram...")
         self._fetch_ac_horsens()
 
@@ -70,6 +110,56 @@ class EventAgent:
         unique.sort(key=lambda x: x.get("date", ""))
         self._update(f"Live events faerdig: {len(unique)} events fundet")
         return unique
+
+    # ── Danske Festivaler 2026 ────────────────────────────────────────────────
+
+    def _load_danish_festivals(self, city: str):
+        """
+        Tilføjer danske festivaler der er relevante for taxakørsel.
+        Inkluderer: festivaler I byen + festivaler inden for 60 km (folk kører til/fra).
+        """
+        today = datetime.now().strftime("%Y-%m-%d")
+        city_key = city.lower().strip()
+
+        for fest in DANISH_FESTIVALS_2026:
+            # Spring over hvis festivalens slutdato er passeret
+            if fest["end"] < today:
+                continue
+
+            # Inkludér hvis: i samme by ELLER inden for 60 km
+            is_local  = fest["city"].lower() in city_key or city_key in fest["city"].lower()
+            is_nearby = fest.get("distance_km", 999) <= 60
+
+            if not (is_local or is_nearby):
+                continue
+
+            # Beregn taxi-relevans score baseret på besøgstal og afstand
+            att = fest["attendance"]
+            dist = fest.get("distance_km", 50)
+            if dist == 0:
+                # Festival ER i byen – direkte kørsel til/fra venue
+                venue_note = f"Festival i {fest['city']} – kørsel til venue"
+            else:
+                # Festival nær by – kørsel til station/P-plads + hjem igen
+                venue_note = f"Festival i {fest['city']} ({dist} km) – stationskørsel + hjemkørsel"
+
+            self.found.append({
+                "name":       fest["name"],
+                "date":       fest["start"],
+                "end_date":   fest["end"],
+                "time":       "12:00",
+                "venue":      f"{fest['name']}, {fest['city']}",
+                "city":       fest["city"],
+                "lat":        fest["lat"],
+                "lon":        fest["lon"],
+                "attendance": att,
+                "category":   "Festival",
+                "source":     "festivalshoppen.dk",
+                "note":       venue_note,
+                "distance_km": dist,
+            })
+
+        logger.info(f"[Festivaler] {len(self.found)} relevante festivaler fundet for {city}")
 
     # ── AC Horsens fodboldkampe ───────────────────────────────────────────────
 
