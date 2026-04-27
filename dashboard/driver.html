@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0a">
+<title>Zyflex Driver</title>
+<style>
+/* ── Reset & base ─────────────────────────────────────── */
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; background:#0a0a0a; color:#fff; overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+
+/* ── Screens ─────────────────────────────────────────── */
+.screen { position:fixed; inset:0; display:flex; flex-direction:column;
+  transition:opacity .25s, transform .25s; }
+.screen.hidden { opacity:0; pointer-events:none; transform:translateY(20px); }
+
+/* ── SCREEN: Splash / Idle ───────────────────────────── */
+#screen-idle {
+  align-items:center; justify-content:center; gap:20px;
+  background: radial-gradient(ellipse at 50% 30%, #1a1200 0%, #0a0a0a 70%);
+}
+.splash-logo { font-size:4rem; }
+.splash-title { font-size:2rem; font-weight:900; letter-spacing:.06em; }
+.splash-sub { color:#666; font-size:.95rem; text-align:center; padding:0 32px; }
+.splash-city-row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; padding:0 16px; }
+.city-chip {
+  background:#161616; border:1.5px solid #333; border-radius:50px;
+  padding:10px 20px; font-size:1rem; color:#ccc; cursor:pointer;
+  transition:all .15s;
+}
+.city-chip.active, .city-chip:active { background:#f5a623; border-color:#f5a623; color:#000; font-weight:700; }
+.splash-run-btn {
+  background:#f5a623; color:#000; border:none; border-radius:16px;
+  padding:18px 48px; font-size:1.2rem; font-weight:900; cursor:pointer;
+  box-shadow:0 0 30px rgba(245,166,35,.4); letter-spacing:.04em;
+  transition:transform .1s, box-shadow .1s;
+}
+.splash-run-btn:active { transform:scale(.96); box-shadow:0 0 15px rgba(245,166,35,.3); }
+
+/* ── SCREEN: Loading ─────────────────────────────────── */
+#screen-loading {
+  align-items:center; justify-content:center; gap:24px;
+  background:#0a0a0a;
+}
+.load-spinner {
+  width:60px; height:60px;
+  border:4px solid #222; border-top-color:#f5a623;
+  border-radius:50%; animation:spin .8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.load-title { font-size:1.4rem; font-weight:700; }
+.load-sub { color:#666; font-size:.9rem; text-align:center; padding:0 32px; }
+.load-dots span { animation:blink 1.2s infinite; }
+.load-dots span:nth-child(2) { animation-delay:.2s; }
+.load-dots span:nth-child(3) { animation-delay:.4s; }
+@keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+
+/* ── SCREEN: Main result ─────────────────────────────── */
+#screen-main {
+  background:#0a0a0a;
+  display:flex; flex-direction:column;
+}
+
+/* Topbar */
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px 10px;
+  border-bottom:1px solid #1a1a1a;
+}
+.tb-logo { font-size:1rem; font-weight:900; letter-spacing:.08em; color:#f5a623; }
+.tb-clock { font-size:.85rem; color:#555; font-variant-numeric:tabular-nums; }
+.tb-dot { width:8px; height:8px; border-radius:50%; background:#333; }
+.tb-dot.live { background:#22c55e; box-shadow:0 0 8px #22c55e; animation:pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+/* Score ring */
+.score-section {
+  display:flex; flex-direction:column; align-items:center;
+  padding:18px 20px 8px; flex-shrink:0;
+}
+.score-ring-wrap { position:relative; width:160px; height:160px; }
+.score-ring {
+  width:160px; height:160px;
+  transform:rotate(-90deg);
+}
+.ring-bg { fill:none; stroke:#1e1e1e; stroke-width:12; }
+.ring-fill { fill:none; stroke-width:12; stroke-linecap:round;
+  transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1), stroke .4s; }
+.ring-center {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  text-align:center;
+}
+.ring-score { font-size:2.6rem; font-weight:900; line-height:1; }
+.ring-max   { font-size:.75rem; color:#555; }
+
+/* Demand badge */
+.demand-badge {
+  display:inline-block; border-radius:50px; padding:6px 18px;
+  font-size:.85rem; font-weight:700; letter-spacing:.06em;
+  margin-top:10px;
+}
+.db-critical { background:#7f1d1d; color:#fca5a5; border:1px solid #dc2626; }
+.db-high     { background:#431407; color:#fb923c; border:1px solid #ea580c; }
+.db-medium   { background:#1c1917; color:#fbbf24; border:1px solid #d97706; }
+.db-low      { background:#111; color:#6b7280; border:1px solid #374151; }
+
+/* Main instruction card */
+.instruction-card {
+  margin:10px 16px; border-radius:20px; padding:20px 20px 16px;
+  border:2px solid #1e1e1e; background:#111;
+  flex-shrink:0;
+}
+.go-label { font-size:.8rem; color:#666; letter-spacing:.12em; font-weight:600; margin-bottom:4px; }
+.zone-big { font-size:2rem; font-weight:900; line-height:1.1; color:#fff; }
+.reason-txt { color:#888; font-size:.9rem; margin-top:6px; line-height:1.4; }
+
+/* Stats row */
+.stats-row {
+  display:flex; gap:8px; margin:8px 16px; flex-shrink:0;
+}
+.stat-pill {
+  flex:1; background:#111; border:1px solid #1e1e1e; border-radius:12px;
+  padding:10px 8px; text-align:center;
+}
+.stat-val { font-size:1.1rem; font-weight:800; }
+.stat-lbl { font-size:.65rem; color:#555; margin-top:2px; letter-spacing:.04em; }
+.stat-orange { color:#f5a623; }
+.stat-green  { color:#22c55e; }
+.stat-blue   { color:#60a5fa; }
+.stat-purple { color:#a78bfa; }
+
+/* Event strip */
+.event-strip {
+  margin:0 16px 8px; background:#1a0d40; border:1px solid #4c1d95;
+  border-radius:12px; padding:10px 14px;
+  display:flex; align-items:center; gap:10px;
+  flex-shrink:0;
+}
+.event-strip.hidden { display:none; }
+.ev-icon { font-size:1.2rem; }
+.ev-name { font-size:.9rem; font-weight:700; color:#c4b5fd; flex:1; }
+.ev-att  { font-size:.75rem; color:#7c3aed; }
+
+/* Other zones */
+.zones-section { flex:1; overflow-y:auto; padding:0 16px 100px; }
+.zones-lbl { font-size:.7rem; color:#444; letter-spacing:.1em; font-weight:600;
+  padding:12px 0 8px; }
+.zone-row {
+  background:#111; border:1px solid #1e1e1e; border-radius:14px;
+  padding:12px 14px; margin-bottom:8px;
+  display:flex; align-items:center; gap:12px; cursor:pointer;
+  transition:border-color .15s, background .15s;
+  -webkit-user-select:none; user-select:none;
+}
+.zone-row:active { background:#161616; border-color:#333; }
+.zr-info { flex:1; min-width:0; }
+.zr-name { font-size:1rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.zr-sub  { font-size:.75rem; color:#555; margin-top:2px; }
+.zr-earn { font-size:.7rem; color:#f5a623; margin-top:2px; }
+.zr-score { font-size:1.4rem; font-weight:900; min-width:42px; text-align:right; }
+.zr-sh { color:#ef4444; }
+.zr-sm { color:#f59e0b; }
+.zr-sl { color:#6b7280; }
+
+/* Next rush chip */
+.next-rush {
+  background:#111; border:1px solid #1e1e1e; border-radius:12px;
+  padding:10px 14px; margin:0 16px 8px;
+  display:flex; align-items:center; gap:8px;
+  flex-shrink:0;
+}
+.nr-icon { font-size:1rem; }
+.nr-txt  { font-size:.85rem; color:#888; }
+.nr-time { font-size:.85rem; font-weight:700; color:#f5a623; }
+
+/* Bottom action bar */
+.bottom-bar {
+  position:fixed; bottom:0; left:0; right:0;
+  background:#0a0a0a; border-top:1px solid #1a1a1a;
+  padding:12px 16px 20px;
+  display:flex; gap:10px; z-index:50;
+}
+.bb-nav {
+  flex:2; background:#f5a623; color:#000; border:none; border-radius:14px;
+  padding:14px; font-size:1rem; font-weight:900; cursor:pointer;
+  transition:transform .1s;
+}
+.bb-nav:active { transform:scale(.97); }
+.bb-feedback {
+  flex:1; background:#1a1a1a; color:#fff; border:1px solid #2a2a2a;
+  border-radius:14px; padding:14px; font-size:.85rem; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  transition:border-color .15s;
+}
+.bb-feedback:active { border-color:#555; }
+.bb-f-icon { font-size:1.2rem; }
+
+/* ── GO NOW overlay ──────────────────────────────────── */
+#gonow {
+  position:fixed; inset:0; z-index:200;
+  background:#1a0000;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:16px; text-align:center; padding:32px;
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+#gonow.show { opacity:1; pointer-events:all; }
+.gn-pulse {
+  font-size:5rem; animation:gonow-pulse .6s ease-in-out infinite alternate;
+}
+@keyframes gonow-pulse { from{transform:scale(1)} to{transform:scale(1.15)} }
+.gn-title { font-size:1rem; color:#ef4444; letter-spacing:.15em; font-weight:700; }
+.gn-go    { font-size:2.5rem; font-weight:900; color:#fff; line-height:1; }
+.gn-zone  { font-size:3rem; font-weight:900; color:#fca5a5; line-height:1; }
+.gn-score { background:#7f1d1d; color:#fca5a5; border-radius:50px; padding:6px 20px;
+  font-size:1.1rem; font-weight:700; border:1px solid #dc2626; }
+.gn-reason { color:#888; font-size:.9rem; max-width:280px; }
+.gn-nav {
+  background:#ef4444; color:#fff; border:none; border-radius:14px;
+  padding:16px 32px; font-size:1.1rem; font-weight:900; cursor:pointer; width:100%;
+  box-shadow:0 0 30px rgba(239,68,68,.5);
+}
+.gn-dismiss {
+  background:transparent; color:#555; border:none; font-size:.85rem; cursor:pointer;
+  padding:8px; text-decoration:underline;
+}
+
+/* ── Feedback modal ──────────────────────────────────── */
+#fb-modal {
+  position:fixed; inset:0; z-index:150;
+  background:rgba(0,0,0,.85);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+#fb-modal.show { opacity:1; pointer-events:all; }
+.fb-sheet {
+  background:#111; border-radius:24px 24px 0 0; padding:24px 20px 36px;
+  width:100%; max-width:480px;
+  border:1px solid #222; border-bottom:none;
+  transform:translateY(20px); transition:transform .2s;
+}
+#fb-modal.show .fb-sheet { transform:translateY(0); }
+.fb-title { font-size:1.1rem; font-weight:700; text-align:center; margin-bottom:4px; }
+.fb-sub { color:#555; font-size:.85rem; text-align:center; margin-bottom:20px; }
+.fb-btns { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.fb-btn {
+  border:1.5px solid #2a2a2a; background:#161616; border-radius:14px;
+  padding:16px 10px; cursor:pointer; text-align:center; transition:all .15s;
+}
+.fb-btn:active { background:#222; border-color:#555; }
+.fb-btn-icon { font-size:1.8rem; display:block; }
+.fb-btn-lbl  { font-size:.8rem; color:#888; margin-top:4px; display:block; }
+.fb-btn.green { border-color:#16a34a; }
+.fb-btn.green .fb-btn-lbl { color:#22c55e; }
+.fb-btn.red   { border-color:#dc2626; }
+.fb-btn.red   .fb-btn-lbl { color:#ef4444; }
+.fb-close { width:100%; background:transparent; color:#555; border:none;
+  font-size:.85rem; cursor:pointer; margin-top:16px; padding:8px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ IDLE SCREEN -->
+<div class="screen" id="screen-idle">
+  <div class="splash-logo">🚕</div>
+  <div class="splash-title">ZYFLEX DRIVER</div>
+  <div class="splash-sub">Vælg din by – systemet finder de bedste zoner live</div>
+
+  <div class="splash-city-row" id="city-row">
+    <div class="city-chip active" onclick="selectCity(this,'Horsens')">Horsens</div>
+    <div class="city-chip" onclick="selectCity(this,'Aarhus')">Aarhus</div>
+    <div class="city-chip" onclick="selectCity(this,'Vejle')">Vejle</div>
+    <div class="city-chip" onclick="selectCity(this,'Silkeborg')">Silkeborg</div>
+    <div class="city-chip" onclick="selectCity(this,'Herning')">Herning</div>
+    <div class="city-chip" onclick="selectCity(this,'Skanderborg')">Skanderborg</div>
+  </div>
+
+  <button class="splash-run-btn" onclick="startRun()">▶ FIND KUNDER</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════ LOADING SCREEN -->
+<div class="screen hidden" id="screen-loading">
+  <div class="load-spinner"></div>
+  <div class="load-title">Analyserer<span class="load-dots"><span>.</span><span>.</span><span>.</span></span></div>
+  <div class="load-sub" id="load-msg">Henter vejr og events fra Horsens</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ MAIN SCREEN -->
+<div class="screen hidden" id="screen-main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="tb-logo">🚕 ZYFLEX</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="tb-clock" id="tb-clock">00:00</div>
+      <div class="tb-dot live" id="tb-dot"></div>
+      <div style="font-size:.75rem;color:#444;cursor:pointer" onclick="showScreen('idle')">↩</div>
+    </div>
+  </div>
+
+  <!-- Score ring -->
+  <div class="score-section">
+    <div class="score-ring-wrap">
+      <svg class="score-ring" viewBox="0 0 160 160">
+        <circle class="ring-bg" cx="80" cy="80" r="66"/>
+        <circle class="ring-fill" id="ring-fill" cx="80" cy="80" r="66"
+          stroke="#f5a623" stroke-dasharray="414.7" stroke-dashoffset="414.7"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-score" id="ring-score">–</div>
+        <div class="ring-max">/100</div>
+      </div>
+    </div>
+    <div class="demand-badge db-low" id="demand-badge">ANALYSERER</div>
+  </div>
+
+  <!-- Instruction card -->
+  <div class="instruction-card">
+    <div class="go-label">GÅ TIL</div>
+    <div class="zone-big" id="zone-name">–</div>
+    <div class="reason-txt" id="reason-txt">–</div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-pill">
+      <div class="stat-val stat-orange" id="stat-earn">–</div>
+      <div class="stat-lbl">KR/TIME</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-val stat-green" id="stat-weather">–</div>
+      <div class="stat-lbl">VEJR</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-val stat-blue" id="stat-conf">–</div>
+      <div class="stat-lbl">SIKKERHED</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-val stat-purple" id="stat-events">0</div>
+      <div class="stat-lbl">EVENTS</div>
+    </div>
+  </div>
+
+  <!-- Event strip -->
+  <div class="event-strip hidden" id="event-strip">
+    <div class="ev-icon">🎉</div>
+    <div class="ev-name" id="ev-name">–</div>
+    <div class="ev-att" id="ev-att">–</div>
+  </div>
+
+  <!-- Next rush -->
+  <div class="next-rush" id="next-rush-strip">
+    <div class="nr-icon">⏰</div>
+    <div class="nr-txt">Næste rush:</div>
+    <div class="nr-time" id="next-rush-time">–</div>
+  </div>
+
+  <!-- Other zones -->
+  <div class="zones-section">
+    <div class="zones-lbl">ANDRE ZONER</div>
+    <div id="zone-list"></div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <button class="bb-nav" onclick="navigate()">🗺 NAVIGÉR</button>
+    <button class="bb-feedback" onclick="showFeedback()">
+      <span class="bb-f-icon">📍</span>
+      <span style="font-size:.7rem;color:#666">Feedback</span>
+    </button>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════ GO NOW overlay -->
+<div id="gonow">
+  <div class="gn-pulse">🚨</div>
+  <div class="gn-title">⚡ HIGH DEMAND – KØR NU</div>
+  <div class="gn-go">GÅ TIL</div>
+  <div class="gn-zone" id="gn-zone">–</div>
+  <div class="gn-score" id="gn-score">Score: –</div>
+  <div class="gn-reason" id="gn-reason">–</div>
+  <button class="gn-nav" onclick="navigate(); dismissGoNow()">🗺 NAVIGÉR NU</button>
+  <button class="gn-dismiss" onclick="dismissGoNow()">Luk – fortsæt normal visning</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════ Feedback modal -->
+<div id="fb-modal">
+  <div class="fb-sheet">
+    <div class="fb-title" id="fb-zone-name">Zone</div>
+    <div class="fb-sub">Hvad oplever du her nu?</div>
+    <div class="fb-btns">
+      <div class="fb-btn green" onclick="sendFeedback('busy')">
+        <span class="fb-btn-icon">👍</span>
+        <span class="fb-btn-lbl">Travlt her</span>
+      </div>
+      <div class="fb-btn red" onclick="sendFeedback('no_customers')">
+        <span class="fb-btn-icon">😔</span>
+        <span class="fb-btn-lbl">Ingen kunder</span>
+      </div>
+      <div class="fb-btn" onclick="sendFeedback('holding')">
+        <span class="fb-btn-icon">📍</span>
+        <span class="fb-btn-lbl">Holder her</span>
+      </div>
+      <div class="fb-btn" onclick="sendFeedback('good')">
+        <span class="fb-btn-icon">✅</span>
+        <span class="fb-btn-lbl">God tur!</span>
+      </div>
+    </div>
+    <button class="fb-close" onclick="hideFeedback()">Annuller</button>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────
+const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000' : location.origin;
+
+let selectedCity = 'Horsens';
+let currentZone  = null;
+let polling      = null;
+let goNowShown   = false;
+let lastTopZone  = '';
+let autoTimer    = null;
+const RING_CIRC  = 2 * Math.PI * 66; // 414.7
+
+// ── Clock ─────────────────────────────────────────────────────────────────
+setInterval(() => {
+  document.getElementById('tb-clock').textContent =
+    new Date().toLocaleTimeString('da-DK', {hour:'2-digit', minute:'2-digit'});
+}, 1000);
+
+// ── City selection ────────────────────────────────────────────────────────
+function selectCity(el, city) {
+  document.querySelectorAll('.city-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  selectedCity = city;
+}
+
+// ── Screen management ─────────────────────────────────────────────────────
+function showScreen(name) {
+  ['idle','loading','main'].forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (s === name) el.classList.remove('hidden');
+    else            el.classList.add('hidden');
+  });
+}
+
+// ── Run ───────────────────────────────────────────────────────────────────
+async function startRun() {
+  showScreen('loading');
+  document.getElementById('load-msg').textContent = `Henter data for ${selectedCity}...`;
+  try {
+    await fetch(`${API}/api/run`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({city: selectedCity})
+    });
+    startPolling();
+  } catch(e) {
+    document.getElementById('load-msg').textContent = 'Fejl – tjek forbindelsen';
+    setTimeout(() => showScreen('idle'), 2500);
+  }
+}
+
+function startPolling() {
+  if (polling) clearInterval(polling);
+  polling = setInterval(poll, 1000);
+}
+
+async function poll() {
+  try {
+    const r = await fetch(`${API}/api/status`);
+    const s = await r.json();
+
+    // Update loading message
+    const active = Object.values(s.agents || {}).find(a => a.status === 'running');
+    if (active) document.getElementById('load-msg').textContent = active.message;
+
+    if (!s.is_running) {
+      clearInterval(polling);
+      polling = null;
+
+      const rr  = await fetch(`${API}/api/report`);
+      const rep = await rr.json();
+      if (!rep.error) renderResult(rep);
+      else showScreen('idle');
+    }
+  } catch(e) { /* silent retry */ }
+}
+
+// ── Render result ─────────────────────────────────────────────────────────
+function renderResult(r) {
+  const zones   = r.top_zones  || [];
+  const weather = r.weather    || {};
+  const events  = r.events     || [];
+
+  if (!zones.length) { showScreen('idle'); return; }
+
+  showScreen('main');
+  document.getElementById('tb-dot').className = 'tb-dot live';
+
+  const z     = zones[0];
+  const score = z.score || 0;
+  currentZone = {name: z.name, lat: z.lat || null, lon: z.lon || null};
+
+  // Score ring
+  const offset = RING_CIRC * (1 - score / 100);
+  const ringFill = document.getElementById('ring-fill');
+  ringFill.style.strokeDashoffset = offset;
+  ringFill.style.stroke =
+    score >= 85 ? '#ef4444' : score >= 70 ? '#f97316' : score >= 50 ? '#f5a623' : '#6b7280';
+
+  document.getElementById('ring-score').textContent = score;
+  document.getElementById('ring-score').style.color =
+    score >= 85 ? '#ef4444' : score >= 70 ? '#f97316' : score >= 50 ? '#f5a623' : '#9ca3af';
+
+  // Demand badge
+  const badge = document.getElementById('demand-badge');
+  if      (score >= 85) { badge.className='demand-badge db-critical'; badge.textContent='⚡ EKSTREMT HØJ'; }
+  else if (score >= 70) { badge.className='demand-badge db-high';     badge.textContent='🔥 HØJ EFTERSPØRGSEL'; }
+  else if (score >= 50) { badge.className='demand-badge db-medium';   badge.textContent='📈 MODERAT'; }
+  else                  { badge.className='demand-badge db-low';      badge.textContent='📍 LAV EFTERSPØRGSEL'; }
+
+  // Instruction
+  document.getElementById('zone-name').textContent = z.name;
+  document.getElementById('reason-txt').textContent =
+    z.recommendation || (z.reasons || [])[0] || 'Kør til denne zone';
+
+  // Stats
+  document.getElementById('stat-earn').textContent =
+    z.earn_dkk_hr ? `~${z.earn_dkk_hr}` : '–';
+  document.getElementById('stat-weather').textContent =
+    weather.is_raining ? `🌧${(weather.precipitation||0).toFixed(1)}` : `☀️${(weather.temperature||0).toFixed(0)}°`;
+  document.getElementById('stat-conf').textContent = z.confidence || '–';
+  document.getElementById('stat-events').textContent =
+    (z.events_near || []).length || (events.length ? events.length : '0');
+
+  // Event strip
+  const nearEvt = (z.events_near || [])[0] || events[0];
+  const evStrip = document.getElementById('event-strip');
+  if (nearEvt) {
+    evStrip.classList.remove('hidden');
+    document.getElementById('ev-name').textContent = nearEvt.name;
+    document.getElementById('ev-att').textContent  =
+      nearEvt.attendance ? `${(nearEvt.attendance).toLocaleString('da-DK')} gæster` : '';
+  } else {
+    evStrip.classList.add('hidden');
+  }
+
+  // Next rush
+  if (z.next_rush_lbl) {
+    document.getElementById('next-rush-time').textContent = z.next_rush_lbl;
+  } else {
+    document.getElementById('next-rush-strip').style.display = 'none';
+  }
+
+  // Other zones
+  document.getElementById('zone-list').innerHTML = zones.slice(1, 5).map(oz => {
+    const cls = oz.score >= 70 ? 'zr-sh' : oz.score >= 50 ? 'zr-sm' : 'zr-sl';
+    const earn = oz.earn_dkk_hr ? ` · ~${oz.earn_dkk_hr} kr/t` : '';
+    return `
+      <div class="zone-row" onclick="selectZone(${JSON.stringify(oz)})">
+        <div class="zr-info">
+          <div class="zr-name">${oz.name}</div>
+          <div class="zr-sub">${oz.grade || ''}</div>
+          <div class="zr-earn">${earn}</div>
+        </div>
+        <div class="zr-score ${cls}">${oz.score}</div>
+      </div>`;
+  }).join('');
+
+  // GO NOW
+  if (score >= 85 && z.name !== lastTopZone && !goNowShown) {
+    lastTopZone = z.name;
+    triggerGoNow(z, score);
+  }
+
+  // Auto-refresh om 30 min
+  if (autoTimer) clearTimeout(autoTimer);
+  autoTimer = setTimeout(() => startRun(), 30 * 60 * 1000);
+}
+
+// ── Select zone ───────────────────────────────────────────────────────────
+function selectZone(z) {
+  currentZone = {name: z.name, lat: z.lat || null, lon: z.lon || null};
+
+  document.getElementById('zone-name').textContent = z.name;
+  document.getElementById('reason-txt').textContent =
+    z.recommendation || (z.reasons || [])[0] || '';
+
+  const score  = z.score || 0;
+  const offset = RING_CIRC * (1 - score / 100);
+  const rf     = document.getElementById('ring-fill');
+  rf.style.strokeDashoffset = offset;
+  rf.style.stroke = score >= 85 ? '#ef4444' : score >= 70 ? '#f97316' : score >= 50 ? '#f5a623' : '#6b7280';
+  document.getElementById('ring-score').textContent = score;
+  document.getElementById('stat-earn').textContent  = z.earn_dkk_hr ? `~${z.earn_dkk_hr}` : '–';
+  document.getElementById('stat-conf').textContent  = z.confidence || '–';
+}
+
+// ── GO NOW ────────────────────────────────────────────────────────────────
+function triggerGoNow(zone, score) {
+  goNowShown = true;
+  document.getElementById('gn-zone').textContent   = zone.name;
+  document.getElementById('gn-score').textContent  = `Score: ${score}/100`;
+  document.getElementById('gn-reason').textContent = zone.recommendation || '';
+  document.getElementById('gonow').classList.add('show');
+  if ('vibrate' in navigator) navigator.vibrate([300,100,300,100,600]);
+  playAlarm();
+}
+function dismissGoNow() {
+  document.getElementById('gonow').classList.remove('show');
+  goNowShown = false;
+}
+
+// ── Navigate ──────────────────────────────────────────────────────────────
+function navigate() {
+  const name = currentZone?.name || document.getElementById('zone-name').textContent;
+  const city = selectedCity;
+  window.open(`https://www.google.com/maps/search/${encodeURIComponent(name+', '+city+', Danmark')}`, '_blank');
+}
+
+// ── Feedback ──────────────────────────────────────────────────────────────
+function showFeedback() {
+  const name = currentZone?.name || '–';
+  document.getElementById('fb-zone-name').textContent = name;
+  document.getElementById('fb-modal').classList.add('show');
+}
+function hideFeedback() {
+  document.getElementById('fb-modal').classList.remove('show');
+}
+async function sendFeedback(action) {
+  hideFeedback();
+  const zone = currentZone?.name || 'ukendt';
+  try {
+    await fetch(`${API}/api/feedback`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({zone, action})
+    });
+  } catch(e) {}
+  // Vis mini-bekræftelse
+  const dot = document.getElementById('tb-dot');
+  dot.style.background = '#f5a623';
+  setTimeout(() => { dot.className = 'tb-dot live'; }, 1500);
+}
+
+// ── Alarm ─────────────────────────────────────────────────────────────────
+function playAlarm() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[440,0],[550,.18],[660,.36],[770,.54],[880,.72]].forEach(([f,t]) => {
+      const osc = ctx.createOscillator(), gain = ctx.createGain(), T = ctx.currentTime + t;
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'square'; osc.frequency.value = f;
+      gain.gain.setValueAtTime(0, T);
+      gain.gain.linearRampToValueAtTime(.35, T + .03);
+      gain.gain.exponentialRampToValueAtTime(.001, T + .16);
+      osc.start(T); osc.stop(T + .18);
+    });
+  } catch(e) {}
+}
+
+// ── Auto-start: tjek om der allerede er data ──────────────────────────────
+(async () => {
+  try {
+    const r = await fetch(`${API}/api/report`);
+    const d = await r.json();
+    if (!d.error && d.top_zones?.length) {
+      renderResult(d);
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>

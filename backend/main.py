@@ -653,6 +653,10 @@ if dashboard_dir.exists():
     def admin_page():
         return FileResponse(str(dashboard_dir / "admin.html"))
 
+    @app.get("/driver")
+    def driver_page():
+        return FileResponse(str(dashboard_dir / "driver.html"))
+
 
 # ── Start server ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
@@ -672,5 +676,4 @@ if __name__ == "__main__":
     # Auto-refresh hver 30. minut
     threading.Thread(target=_auto_refresh_loop, daemon=True).start()
 
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning")
+  
