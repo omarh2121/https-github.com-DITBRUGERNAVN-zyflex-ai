@@ -86,9 +86,6 @@ class EventAgent:
         self._update("Henter danske festivaler 2026...")
         self._load_danish_festivals(city)
 
-        self._update("Henter AC Horsens kampprogram...")
-        self._fetch_ac_horsens()
-
         self._update("Henter CASA Arena events...")
         self._fetch_casa_arena()
 
@@ -160,80 +157,6 @@ class EventAgent:
             })
 
         logger.info(f"[Festivaler] {len(self.found)} relevante festivaler fundet for {city}")
-
-    # ── AC Horsens fodboldkampe ───────────────────────────────────────────────
-
-    def _fetch_ac_horsens(self):
-        """Henter AC Horsens hjemmekampe fra deres offentlige kampprogram."""
-        try:
-            resp = requests.get(
-                "https://www.ac-horsens.dk/kampe/superliga",
-                headers=HEADERS, timeout=10
-            )
-            html = resp.text
-
-            # Find datoer og modstandere med regex
-            # Format varierer - soeg bredt
-            matches = re.findall(
-                r'(\d{1,2}[./]\d{1,2}[./]\d{4})[^<]*?([A-Z][a-zA-Z\s\-]+(?:FC|BK|IF|AGF|OB|AaB|FCK|FCM|RFC|SIF|HB|AB))',
-                html
-            )
-
-            today = datetime.now()
-            for date_str, opponent in matches[:15]:
-                try:
-                    date_obj = datetime.strptime(date_str.replace("/", "."), "%d.%m.%Y")
-                    if date_obj < today - timedelta(days=1):
-                        continue
-                    iso_date = date_obj.strftime("%Y-%m-%d")
-                    self.found.append({
-                        "name":       f"AC Horsens vs {opponent.strip()}",
-                        "date":       iso_date,
-                        "time":       "15:00",
-                        "venue":      "CASA Arena Horsens",
-                        "city":       "Horsens",
-                        "lat":        55.8572,
-                        "lon":        9.8614,
-                        "attendance": 6000,
-                        "category":   "Fodbold",
-                        "source":     "ac-horsens.dk",
-                    })
-                except Exception:
-                    continue
-
-            if not self.found:
-                # Fallback: hardcode naeste kendte hjemmekampe
-                self._hardcode_ac_horsens()
-
-        except Exception as e:
-            logger.warning(f"AC Horsens scrape fejlede: {e}")
-            self._hardcode_ac_horsens()
-
-    def _hardcode_ac_horsens(self):
-        """Kendte AC Horsens hjemmekampe baseret paa Superliga-saesonplan."""
-        today = datetime.now().strftime("%Y-%m-%d")
-        games = [
-            ("2026-04-26", "FC Midtjylland", 7500),
-            ("2026-05-03", "AGF",             6500),
-            ("2026-05-10", "OB",              6000),
-            ("2026-05-17", "FC Nordsjaelland",5800),
-            ("2026-05-24", "Vejle BK",        6200),
-            ("2026-06-01", "AaB",             6800),
-        ]
-        for date, opponent, att in games:
-            if date >= today:
-                self.found.append({
-                    "name":       f"AC Horsens vs {opponent}",
-                    "date":       date,
-                    "time":       "18:00",
-                    "venue":      "CASA Arena Horsens",
-                    "city":       "Horsens",
-                    "lat":        55.8572,
-                    "lon":        9.8614,
-                    "attendance": att,
-                    "category":   "Fodbold",
-                    "source":     "hardcoded-saesonplan",
-                })
 
     # ── CASA Arena events ─────────────────────────────────────────────────────
 
