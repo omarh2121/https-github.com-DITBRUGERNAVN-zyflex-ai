@@ -28,12 +28,13 @@ PROSPECTS = {
     # ── HOTELLER ─────────────────────────────────────────────────────────────
     "hotel": [
         {
-            "navn":           "Hotel Opus Horsens",
+            "navn":           "Scandic Opus Horsens",
             "type":           "B2B",
             "kategori":       "hotel",
             "adresse":        "Bygholm Søvej 1, 8700 Horsens",
-            "tlf":            "+45 76 25 03 00",
-            "kontakt":        "Receptionen / Sales Manager",
+            "tlf":            "+45 76 25 72 00",
+            "email":          "",  # Ring og bed om sales-email
+            "kontakt":        "Reception → bed om Sales/Konference",
             "behov":          "Gæste-transport fra/til Horsens Station og Billund Lufthavn",
             "maanedlig_dkk":  6000,
             "sandsynlighed":  82,
@@ -41,12 +42,13 @@ PROSPECTS = {
             "prioritet":      "HØJ",
         },
         {
-            "navn":           "Scandic Bygholm Park",
+            "navn":           "Comwell Bygholm Park",
             "type":           "B2B",
             "kategori":       "hotel",
             "adresse":        "Schüttesvej 6, 8700 Horsens",
-            "tlf":            "+45 75 62 23 00",
-            "kontakt":        "Hotel Manager",
+            "tlf":            "+45 76 31 95 00",
+            "email":          "konference.bygholmpark@comwell.com",
+            "kontakt":        "Konferenceafdeling / Sales Manager",
             "behov":          "Fast aftale: gæster til/fra station, konferencer, late-night transport",
             "maanedlig_dkk":  8500,
             "sandsynlighed":  78,
@@ -74,9 +76,10 @@ PROSPECTS = {
             "navn":           "Horsens Regionshospital",
             "type":           "FAST",
             "kategori":       "hospital",
-            "adresse":        "Sundvej 30, 8700 Horsens",
-            "tlf":            "+45 78 42 00 00",
-            "kontakt":        "Indkøbsafdeling / Logistikchef",
+            "adresse":        "Strandpromenaden 35A, 8700 Horsens",
+            "tlf":            "+45 78 44 20 40",
+            "email":          "post@horsens.rm.dk",
+            "kontakt":        "Indkøb & Logistik",
             "behov":          "Patient-transport, personale-kørsel nat/weekend, blodprøver",
             "maanedlig_dkk":  15000,
             "sandsynlighed":  70,
@@ -200,11 +203,12 @@ PROSPECTS = {
     # ── EVENT & UNDERHOLDNING ─────────────────────────────────────────────────
     "events": [
         {
-            "navn":           "CASA Arena Horsens",
+            "navn":           "Forum Horsens / CASA Arena",
             "type":           "B2B",
             "kategori":       "venue",
-            "adresse":        "Langmarksvej 60, 8700 Horsens",
-            "tlf":            "+45 75 62 19 00",
+            "adresse":        "Langmarksvej 53, 8700 Horsens",
+            "tlf":            "+45 76 29 23 23",
+            "email":          "forum@horsens.dk",
             "kontakt":        "Event Manager / Drift",
             "behov":          "VIP-transport, artistkørsel, sent-event transport for publikum",
             "maanedlig_dkk":  7000,
@@ -378,12 +382,4 @@ class ProspectAgent:
                 f"Vi tilbyder månedlig faktura, faste priser og chauffører der er til rådighed "
                 f"også udenfor normal åbningstid.\n\n"
                 f"Har I behov for en fast transportaftale?\n\n"
-                f"Med venlig hilsen\nMo Jensen – Zyflex ApS\n"
-                f"Tlf: [DIT NUMMER]"
-            )
-
-        return {"emne": emne, "tekst": tekst}
-
-    def _update(self, msg: str):
-        logger.info(f"[ProspectAgent] {msg}")
-        self.status_callback(msg)
+     

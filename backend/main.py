@@ -394,6 +394,25 @@ async def get_prospects(city: str = "Horsens"):
     result = agent.run(city)
     return result
 
+@app.get("/api/outreach")
+async def get_outreach(city: str = "Horsens"):
+    """Hent klar-til-send outreach emails til top prospects."""
+    agent = ProspectAgent()
+    result = agent.run(city)
+    emails = []
+    for p in result.get("top_prospects", []) + result.get("middel_prospects", []):
+        emails.append({
+            "navn":    p["navn"],
+            "email":   p.get("email", ""),
+            "tlf":     p.get("tlf", ""),
+            "kontakt": p.get("kontakt", ""),
+            "prioritet": p.get("prioritet", ""),
+            "maanedlig_dkk": p.get("maanedlig_dkk", 0),
+            "emne":    p.get("outreach_emne", ""),
+            "tekst":   p.get("outreach_tekst", ""),
+        })
+    return {"emails": emails, "total": len(emails), "city": city}
+
 @app.post("/api/admin/invoice/paid")
 async def admin_mark_paid(request: Request):
     _, err = _require_admin(request)
@@ -669,20 +688,4 @@ if dashboard_dir.exists():
 # ── Start server ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     print("\n" + "=" * 60)
-    print("  🚕  ZYFLEX AI – COMMAND CENTER")
-    print(f"  📅  {datetime.now().strftime('%A %d. %B %Y, kl. %H:%M')}")
-    print("=" * 60)
-    print("  🌐  Server:    http://localhost:8000")
-    print("  📊  Dashboard: http://localhost:8000")
-    print("  🔌  API:       http://localhost:8000/api/status")
-    print("=" * 60)
-    print("  Åbn http://localhost:8000 i din browser")
-    print("  Tryk Ctrl+C for at stoppe\n")
-
-    # Kør automatisk ved opstart for Horsens
-    threading.Thread(target=_run_all_agents, args=("Horsens",), daemon=True).start()
-    # Auto-refresh hver 30. minut
-    threading.Thread(target=_auto_refresh_loop, daemon=True).start()
-
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning")
+    print("  🚕  ZY
