@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080c14">
+<title>Zyflex Owner – Kontrolrum</title>
+<style>
+/* ── Reset ── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:14px}
+body{background:#080c14;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+
+/* ── Layout ── */
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 20px;background:#0a1020;
+  border-bottom:1px solid #1e2d45;position:sticky;top:0;z-index:100}
+.tb-logo{font-weight:900;font-size:1rem;color:#60a5fa;letter-spacing:.08em}
+.tb-badge{background:#0a1628;border:1px solid #1e3a5f;border-radius:50px;
+  padding:3px 10px;font-size:.65rem;color:#3b82f6;letter-spacing:.06em}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tb-clock{font-size:.8rem;color:#4a5568;font-variant-numeric:tabular-nums}
+.tb-logout{background:transparent;border:1px solid #1e2d45;border-radius:8px;
+  color:#6b7280;font-size:.75rem;padding:5px 10px;cursor:pointer}
+.tb-logout:hover{border-color:#ef4444;color:#ef4444}
+
+.content{padding:16px;max-width:1400px;margin:0 auto}
+
+/* ── Stats row ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.stat-card{background:#0f1520;border:1px solid #1e2d45;border-radius:14px;padding:14px 16px}
+.stat-lbl{font-size:.65rem;color:#4a5568;letter-spacing:.1em;margin-bottom:6px}
+.stat-val{font-size:1.4rem;font-weight:900}
+.sc-blue{color:#60a5fa} .sc-green{color:#34d399} .sc-orange{color:#f59e0b} .sc-red{color:#f87171}
+
+/* ── Sections ── */
+.section{background:#0f1520;border:1px solid #1e2d45;border-radius:16px;padding:16px;margin-bottom:16px}
+.section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.section-title{font-weight:800;font-size:.95rem;color:#93c5fd}
+.section-badge{background:#0a1628;border:1px solid #1e3a5f;border-radius:50px;
+  padding:2px 8px;font-size:.65rem;color:#3b82f6}
+
+/* ── Agent cards ── */
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.agent-card{background:#080c14;border:1px solid #1e2d45;border-radius:12px;padding:12px 14px}
+.agent-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.agent-ikon{font-size:1.3rem}
+.agent-navn{font-weight:700;font-size:.9rem;flex:1}
+.agent-status{font-size:.65rem;font-weight:600;border-radius:50px;padding:2px 8px}
+.s-idle{background:#0f1520;color:#4a5568;border:1px solid #1e2d45}
+.s-running{background:#1a1f0a;color:#86efac;border:1px solid #16a34a}
+.s-done{background:#0a1628;color:#60a5fa;border:1px solid #2563eb}
+.s-error{background:#1a0a0a;color:#f87171;border:1px solid #dc2626}
+.agent-formaal{font-size:.75rem;color:#6b7280;margin-bottom:6px}
+.agent-skills{display:flex;flex-wrap:wrap;gap:4px}
+.skill-tag{background:#0a1628;border:1px solid #1e3a5f;border-radius:50px;
+  padding:2px 8px;font-size:.65rem;color:#93c5fd}
+.agent-besked{font-size:.72rem;color:#4a5568;margin-top:6px;font-style:italic}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filter-bar input,.filter-bar select{
+  background:#080c14;border:1px solid #1e2d45;border-radius:10px;
+  padding:8px 12px;color:#e2e8f0;font-size:.8rem;outline:none;min-width:120px}
+.filter-bar input:focus,.filter-bar select:focus{border-color:#3b82f6}
+.filter-bar input{flex:1;min-width:180px}
+.filter-actions{margin-left:auto;display:flex;gap:6px}
+.btn-sm{border:none;border-radius:8px;padding:7px 12px;font-size:.75rem;
+  font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn-sm:hover{opacity:.85}
+.btn-primary{background:#3b82f6;color:#fff}
+.btn-success{background:#059669;color:#fff}
+.btn-warning{background:#d97706;color:#fff}
+.btn-danger{background:#dc2626;color:#fff}
+.btn-ghost{background:#1e2d45;color:#93c5fd}
+
+/* ── Leads table ── */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead th{background:#080c14;color:#4a5568;font-weight:600;letter-spacing:.06em;
+  padding:10px 12px;text-align:left;border-bottom:1px solid #1e2d45;white-space:nowrap}
+tbody tr{border-bottom:1px solid #111827;transition:background .1s}
+tbody tr:hover{background:#0a1020}
+tbody td{padding:10px 12px;vertical-align:top}
+.lead-navn{font-weight:700;color:#e2e8f0;white-space:nowrap}
+.lead-by{font-size:.7rem;color:#6b7280}
+.lead-type{background:#0a1628;border:1px solid #1e3a5f;border-radius:50px;
+  padding:2px 8px;font-size:.65rem;color:#93c5fd;white-space:nowrap}
+.score-pill{display:inline-block;border-radius:50px;padding:2px 8px;
+  font-size:.75rem;font-weight:800;min-width:36px;text-align:center}
+.sc-high{background:#0a2010;color:#34d399;border:1px solid #059669}
+.sc-mid{background:#1a1200;color:#fbbf24;border:1px solid #d97706}
+.sc-low{background:#0a0a0a;color:#6b7280;border:1px solid #374151}
+.val-cell{color:#f59e0b;font-weight:700;white-space:nowrap}
+.status-sel{background:#080c14;border:1px solid #1e2d45;border-radius:8px;
+  color:#e2e8f0;padding:4px 8px;font-size:.75rem;cursor:pointer}
+.actions-cell{display:flex;gap:4px;flex-wrap:wrap}
+.act-btn{border:none;border-radius:6px;padding:5px 8px;font-size:.75rem;
+  cursor:pointer;transition:opacity .15s;white-space:nowrap}
+.act-btn:hover{opacity:.8}
+.ab-blue{background:#1e3a5f;color:#60a5fa}
+.ab-green{background:#0a2010;color:#34d399}
+.ab-orange{background:#1a1000;color:#f59e0b}
+.ab-purple{background:#1a0a2a;color:#c4b5fd}
+.ab-red{background:#1a0a0a;color:#f87171}
+.notes-cell{max-width:180px;color:#6b7280;font-size:.72rem;word-break:break-word}
+.naeste-cell{color:#93c5fd;font-size:.72rem}
+
+/* ── Modal ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-backdrop.show{opacity:1;pointer-events:all}
+.modal-sheet{background:#0f1520;border:1px solid #1e2d45;border-radius:20px 20px 0 0;
+  padding:24px 20px 32px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;
+  transform:translateY(20px);transition:transform .2s}
+.modal-backdrop.show .modal-sheet{transform:translateY(0)}
+.modal-title{font-weight:900;font-size:1rem;color:#93c5fd;margin-bottom:4px}
+.modal-sub{color:#4a5568;font-size:.8rem;margin-bottom:16px}
+.modal-body{font-size:.82rem;white-space:pre-wrap;line-height:1.6;color:#cbd5e1;
+  background:#080c14;border:1px solid #1e2d45;border-radius:10px;padding:14px;
+  max-height:50vh;overflow-y:auto}
+.modal-footer{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.modal-close{background:transparent;color:#6b7280;border:none;font-size:.85rem;
+  cursor:pointer;padding:8px;margin-top:8px;width:100%;text-decoration:underline}
+
+/* ── Notes edit ── */
+.notes-form{display:flex;flex-direction:column;gap:10px}
+.notes-form textarea{background:#080c14;border:1px solid #1e2d45;border-radius:10px;
+  color:#e2e8f0;padding:12px;font-size:.85rem;resize:vertical;min-height:100px;outline:none}
+.notes-form input[type=date]{background:#080c14;border:1px solid #1e2d45;border-radius:10px;
+  color:#e2e8f0;padding:10px 12px;font-size:.85rem;outline:none}
+.notes-form label{font-size:.75rem;color:#6b7280}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#0f1520;border:1px solid #1e3a5f;border-radius:12px;
+  padding:10px 20px;font-size:.85rem;color:#93c5fd;z-index:300;
+  transition:transform .25s;pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── Mobile ── */
+@media(max-width:600px){
+  .section{padding:12px}
+  .filter-bar{gap:6px}
+  table{font-size:.72rem}
+  tbody td{padding:8px}
+}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="tb-logo">🚕 ZYFLEX OWNER</div>
+  <div class="tb-badge">🔒 PRIVAT</div>
+  <div class="tb-right">
+    <div class="tb-clock" id="clock">–</div>
+    <button class="tb-logout" onclick="logout()">Log ud</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Stats -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-lbl">TOTAL LEADS</div><div class="stat-val sc-blue" id="st-total">–</div></div>
+    <div class="stat-card"><div class="stat-lbl">VARME LEADS (≥75)</div><div class="stat-val sc-green" id="st-hot">–</div></div>
+    <div class="stat-card"><div class="stat-lbl">POTENTIALE/MD</div><div class="stat-val sc-orange" id="st-pot">–</div></div>
+    <div class="stat-card"><div class="stat-lbl">KLAR TIL KONTAKT</div><div class="stat-val sc-red" id="st-ready">–</div></div>
+    <div class="stat-card"><div class="stat-lbl">AKTIVE AGENTER</div><div class="stat-val sc-blue" id="st-agents">–</div></div>
+    <div class="stat-card"><div class="stat-lbl">AFTALER VUNDET</div><div class="stat-val sc-green" id="st-won">–</div></div>
+  </div>
+
+  <!-- Agenter -->
+  <div class="section">
+    <div class="section-hdr">
+      <div class="section-title">🤖 AI-AGENTER</div>
+      <div class="section-badge" id="agents-badge">Indlæser...</div>
+      <button class="btn-sm btn-primary" style="margin-left:auto" onclick="runAllAgents()">▶ Kør alle agenter</button>
+    </div>
+    <div class="agents-grid" id="agents-grid">
+      <div style="color:#4a5568;font-size:.8rem">Indlæser agenter...</div>
+    </div>
+  </div>
+
+  <!-- Leads -->
+  <div class="section">
+    <div class="section-hdr">
+      <div class="section-title">🎯 CONTRACT HUNTER – LEADS</div>
+      <div class="section-badge" id="leads-badge">–</div>
+      <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-sm btn-success" onclick="exportCSV()">⬇ CSV</button>
+        <button class="btn-sm btn-ghost" onclick="openAddLead()">+ Tilføj lead</button>
+        <button class="btn-sm btn-primary" onclick="loadLeads()">↻ Opdater</button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <input id="f-search" placeholder="🔍 Søg navn, by, email..." oninput="loadLeads()">
+      <select id="f-by" onchange="loadLeads()">
+        <option value="">Alle byer</option>
+        <option>Horsens</option><option>Herning</option><option>Vejle</option>
+        <option>Kolding</option><option>Aarhus</option><option>Ikast</option><option>Brande</option>
+      </select>
+      <select id="f-type" onchange="loadLeads()">
+        <option value="">Alle typer</option>
+        <option>Hotel</option><option>Hospital</option><option>Kommune</option>
+        <option>Eventsted</option><option>Idrætsklub</option><option>Uddannelse</option>
+        <option>Konferencecenter</option><option>Plejehjem</option><option>Jobcenter</option>
+      </select>
+      <select id="f-status" onchange="loadLeads()">
+        <option value="">Alle statusser</option>
+        <option>Ny</option><option>Skal tjekkes</option><option>Klar til kontakt</option>
+        <option>Mail skrevet</option><option>Mail sendt</option><option>Ringet</option>
+        <option>Afventer svar</option><option>Møde booket</option>
+        <option>Tilbud sendt</option><option>Aftale vundet</option><option>Afvist</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Score</th>
+            <th>Navn</th>
+            <th>By</th>
+            <th>Type</th>
+            <th>Kontakt</th>
+            <th>Kr/md</th>
+            <th>Status</th>
+            <th>Næste handling</th>
+            <th>Handlinger</th>
+            <th>Noter</th>
+          </tr>
+        </thead>
+        <tbody id="leads-tbody">
+          <tr><td colspan="10" style="color:#4a5568;padding:20px;text-align:center">Indlæser leads...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: email/script/noter -->
+<div class="modal-backdrop" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sheet">
+    <div class="modal-title" id="modal-title">–</div>
+    <div class="modal-sub" id="modal-sub">–</div>
+    <div id="modal-content"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+    <button class="modal-close" onclick="closeModal()">Luk</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = location.origin;
+
+// ── Auth guard ────────────────────────────────────────────────────────────
+async function checkAuth() {
+  try {
+    const r = await fetch(`${API}/api/owner/tasks`, {credentials:'include'});
+    if (r.status === 401) location.href = '/owner/login';
+  } catch(e) { location.href = '/owner/login'; }
+}
+
+async function logout() {
+  await fetch(`${API}/api/owner/logout`, {method:'POST', credentials:'include'});
+  location.href = '/owner/login';
+}
+
+// ── Clock ─────────────────────────────────────────────────────────────────
+setInterval(() => {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleString('da-DK',{weekday:'short',hour:'2-digit',minute:'2-digit'});
+},1000);
+
+// ── Agents ────────────────────────────────────────────────────────────────
+async function loadAgents() {
+  try {
+    const r = await fetch(`${API}/api/owner/agents`, {credentials:'include'});
+    if (r.status === 401) { location.href='/owner/login'; return; }
+    const d = await r.json();
+    renderAgents(d.agents || []);
+    const active = (d.agents||[]).filter(a=>a.status==='running').length;
+    document.getElementById('agents-badge').textContent =
+      active ? `${active} kører` : `${(d.agents||[]).length} agenter`;
+    document.getElementById('st-agents').textContent = active || '0';
+  } catch(e) {}
+}
+
+function renderAgents(agents) {
+  document.getElementById('agents-grid').innerHTML = agents.map(a => {
+    const sc = a.status==='running'?'s-running':a.status==='done'?'s-done':a.status==='error'?'s-error':'s-idle';
+    const slbl = a.status==='running'?'KØRER':a.status==='done'?'FÆRDIG':a.status==='error'?'FEJL':'STANDBY';
+    const skills = (a.skills||[]).map(s=>`<span class="skill-tag">${s}</span>`).join('');
+    return `
+    <div class="agent-card">
+      <div class="agent-top">
+        <div class="agent-ikon">${a.ikon}</div>
+        <div class="agent-navn">${a.navn}</div>
+        <span class="agent-status ${sc}">${slbl}</span>
+      </div>
+      <div class="agent-formaal">${a.formål}</div>
+      <div class="agent-skills">${skills}</div>
+      ${a.besked && a.besked!=='–' ? `<div class="agent-besked">${a.besked}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function runAllAgents() {
+  toast('▶ Kører alle agenter...');
+  await fetch(`${API}/api/run`, {method:'POST',credentials:'include',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({city:'Horsens'})});
+  setTimeout(loadAgents, 2000);
+}
+
+// ── Leads ─────────────────────────────────────────────────────────────────
+let allLeads = [];
+
+async function loadLeads() {
+  const q  = document.getElementById('f-search').value;
+  const by = document.getElementById('f-by').value;
+  const tp = document.getElementById('f-type').value;
+  const st = document.getElementById('f-status').value;
+  const params = new URLSearchParams();
+  if (q)  params.set('q', q);
+  if (by) params.set('by', by);
+  if (tp) params.set('type', tp);
+  if (st) params.set('status', st);
+  try {
+    const r = await fetch(`${API}/api/owner/leads?${params}`, {credentials:'include'});
+    if (r.status===401){location.href='/owner/login';return;}
+    const d = await r.json();
+    allLeads = d.leads || [];
+    renderLeads(allLeads);
+    document.getElementById('leads-badge').textContent = `${allLeads.length} leads`;
+    document.getElementById('st-total').textContent = allLeads.length;
+    document.getElementById('st-hot').textContent   = allLeads.filter(l=>l.score>=75).length;
+    document.getElementById('st-pot').textContent   = (d.monthly_pot||0).toLocaleString('da-DK')+'kr';
+    document.getElementById('st-ready').textContent = allLeads.filter(l=>l.status==='Klar til kontakt').length;
+    document.getElementById('st-won').textContent   = allLeads.filter(l=>l.status==='Aftale vundet').length;
+  } catch(e){}
+}
+
+function renderLeads(leads) {
+  if (!leads.length) {
+    document.getElementById('leads-tbody').innerHTML =
+      '<tr><td colspan="10" style="color:#4a5568;padding:20px;text-align:center">Ingen leads fundet</td></tr>';
+    return;
+  }
+  document.getElementById('leads-tbody').innerHTML = leads.map(l => {
+    const sc = l.score>=75?'sc-high':l.score>=55?'sc-mid':'sc-low';
+    const emailBtn = l.email
+      ? `<button class="act-btn ab-blue" onclick="copyText('${l.email}','Email kopieret')" title="${l.email}">📋 Email</button>`
+      : '';
+    const tlfBtn = l.tlf
+      ? `<button class="act-btn ab-green" onclick="copyText('${l.tlf}','Tlf kopieret')" title="${l.tlf}">📞 Tlf</button>`
+      : '';
+    const webBtn = l.website
+      ? `<button class="act-btn ab-purple" onclick="window.open('https://'+('${l.website}'.replace('https://','')),'_blank')">🌐 Web</button>`
+      : '';
+    return `
+    <tr id="row-${l.id}">
+      <td><span class="score-pill ${sc}">${l.score}</span></td>
+      <td>
+        <div class="lead-navn">${l.navn}</div>
+        <div class="lead-by">${l.adresse||''}</div>
+      </td>
+      <td><div style="font-weight:600">${l.by}</div></td>
+      <td><span class="lead-type">${l.type}</span></td>
+      <td>
+        <div style="font-size:.75rem">${l.kontakt||'–'}</div>
+        ${l.beslutningstager?`<div style="font-size:.68rem;color:#4a5568">${l.beslutningstager}</div>`:''}
+      </td>
+      <td class="val-cell">${(l.maanedlig_dkk||0).toLocaleString('da-DK')} kr</td>
+      <td>
+        <select class="status-sel" onchange="updateStatus(${l.id},this.value)">
+          ${['Ny','Skal tjekkes','Klar til kontakt','Mail skrevet','Mail sendt','Ringet',
+             'Afventer svar','Møde booket','Tilbud sendt','Aftale vundet','Afvist']
+            .map(s=>`<option${s===l.status?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td class="naeste-cell">${l.naeste_handling||'–'}</td>
+      <td class="actions-cell">
+        ${emailBtn}${tlfBtn}${webBtn}
+        <button class="act-btn ab-orange" onclick="genEmail(${l.id})">✉ Email</button>
+        <button class="act-btn ab-purple" onclick="genScript(${l.id})">📞 Script</button>
+        <button class="act-btn ab-green" onclick="openNotes(${l.id})">📝 Notér</button>
+      </td>
+      <td class="notes-cell">${l.noter||'–'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function updateStatus(id, status) {
+  const lead = allLeads.find(l=>l.id===id);
+  if (!lead) return;
+  await fetch(`${API}/api/owner/leads/${id}`, {
+    method:'PUT', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({...lead, status})
+  });
+  toast(`Status: ${status}`);
+  loadLeads();
+}
+
+// ── Generate email ─────────────────────────────────────────────────────────
+async function genEmail(id) {
+  const lead = allLeads.find(l=>l.id===id);
+  if (!lead) return;
+  const r = await fetch(`${API}/api/contract-hunter/generate-email`, {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({lead, sender_name:'Mo Jensen', sender_phone:''})
+  });
+  const d = await r.json();
+  openModal(
+    `✉ Email til ${lead.navn}`,
+    `Til: ${lead.email||'[find email]'} · Emne: ${d.emne}`,
+    `<b>Emne:</b> ${d.emne}\n\n${d.tekst}`,
+    [
+      {lbl:'📋 Kopiér email', cls:'btn-primary', fn:`copyText(\`${d.tekst.replace(/`/g,"'")}\`,'Email kopieret')`},
+      {lbl:'📋 Kopiér emne',  cls:'btn-ghost',   fn:`copyText(\`${d.emne}\`,'Emne kopieret')`},
+    ]
+  );
+}
+
+async function genScript(id) {
+  const lead = allLeads.find(l=>l.id===id);
+  if (!lead) return;
+  const r = await fetch(`${API}/api/contract-hunter/generate-call-script`, {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({lead})
+  });
+  const d = await r.json();
+  openModal(
+    `📞 Opkaldsscript – ${lead.navn}`,
+    `Ring: ${lead.tlf||'[find tlf]'}`,
+    d.script,
+    [{lbl:'📋 Kopiér script', cls:'btn-primary', fn:`copyText(\`${d.script.replace(/`/g,"'")}\`,'Script kopieret')`}]
+  );
+}
+
+function openNotes(id) {
+  const lead = allLeads.find(l=>l.id===id);
+  if (!lead) return;
+  const content = `
+    <div class="notes-form">
+      <label>📝 Notater</label>
+      <textarea id="edit-noter" placeholder="Skriv noter...">${lead.noter||''}</textarea>
+      <label>⚡ Næste handling</label>
+      <textarea id="edit-naeste" rows="2" placeholder="Fx: Ring tirsdag kl. 10">${lead.naeste_handling||''}</textarea>
+      <label>📅 Opfølgningsdato</label>
+      <input type="date" id="edit-followup" value="${lead.follow_up||''}">
+    </div>`;
+  openModal(
+    `📝 Notater – ${lead.navn}`, '',
+    null,
+    [{lbl:'💾 Gem', cls:'btn-success', fn:`saveNotes(${id})`}]
+  );
+  document.getElementById('modal-content').innerHTML = content;
+}
+
+async function saveNotes(id) {
+  const lead = allLeads.find(l=>l.id===id);
+  if (!lead) return;
+  lead.noter          = document.getElementById('edit-noter').value;
+  lead.naeste_handling = document.getElementById('edit-naeste').value;
+  lead.follow_up      = document.getElementById('edit-followup').value;
+  await fetch(`${API}/api/owner/leads/${id}`, {
+    method:'PUT', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(lead)
+  });
+  closeModal(); toast('✅ Notater gemt'); loadLeads();
+}
+
+// ── Add lead ──────────────────────────────────────────────────────────────
+function openAddLead() {
+  const content = `
+    <div class="notes-form" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label>Navn *</label><input type="text" id="nl-navn" placeholder="Firma..." style="width:100%;background:#080c14;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;padding:8px;font-size:.85rem"></div>
+      <div><label>Type *</label><select id="nl-type" style="width:100%;background:#080c14;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;padding:8px;font-size:.85rem"><option>Hotel</option><option>Hospital</option><option>Plejehjem</option><option>Kommune</option><option>Eventsted</option><option>Idrætsklub</option><option>Uddannelse</option><option>Erhverv</option></select></div>
+      <div><label>By *</label><input type="text" id="nl-by" placeholder="Horsens" style="width:100%;background:#080c14;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;padding:8px;font-size:.85rem"></div>
+      <div><label>Tlf</label><input type="tel" id="nl-tlf" placeholder="+45..." style="width:100%;background:#080c14;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;padding:8px;font-size:.85rem"></div>
+      <div style="grid-column:span 2"><label>Email</label><input type="email" id="nl-email" placeholder="kontakt@firma.dk" style="width:100%;background:#080c14;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;padding:8px;font-size:.85rem"></div>
+      <div style="grid-column:span 2"><label>Website</label><input type="text" id="nl-web" placeholder="firma.dk" style="width:100%;background:#080c14;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;padding:8px;font-size:.85rem"></div>
+      <div style="grid-column:span 2"><label>Årsag / behov</label><textarea id="nl-aarsag" rows="2" placeholder="Hvorfor har de brug for transport?" style="width:100%;background:#080c14;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;padding:8px;font-size:.85rem"></textarea></div>
+      <div><label>Kr/md (estimat)</label><input type="number" id="nl-dkk" placeholder="5000" style="width:100%;background:#080c14;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;padding:8px;font-size:.85rem"></div>
+      <div><label>Score (0-100)</label><input type="number" id="nl-score" placeholder="70" min="0" max="100" style="width:100%;background:#080c14;border:1px solid #1e2d45;border-radius:8px;color:#e2e8f0;padding:8px;font-size:.85rem"></div>
+    </div>`;
+  openModal('+ Tilføj nyt lead', 'Udfyld informationer om den potentielle kunde', null,
+    [{lbl:'💾 Gem lead', cls:'btn-success', fn:'addLead()'}]);
+  document.getElementById('modal-content').innerHTML = content;
+}
+
+async function addLead() {
+  const lead = {
+    navn:           document.getElementById('nl-navn').value,
+    type:           document.getElementById('nl-type').value,
+    by:             document.getElementById('nl-by').value,
+    tlf:            document.getElementById('nl-tlf').value,
+    email:          document.getElementById('nl-email').value,
+    website:        document.getElementById('nl-web').value,
+    aarsag:         document.getElementById('nl-aarsag').value,
+    maanedlig_dkk:  parseInt(document.getElementById('nl-dkk').value)||0,
+    score:          parseInt(document.getElementById('nl-score').value)||50,
+    status:         'Ny',
+    sandsynlighed:  50,
+  };
+  if (!lead.navn || !lead.by) { toast('⚠ Udfyld navn og by'); return; }
+  await fetch(`${API}/api/owner/leads`, {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(lead)
+  });
+  closeModal(); toast('✅ Lead tilføjet'); loadLeads();
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['Score','Navn','By','Type','Tlf','Email','Website','Kontakt','Kr/md','Status','Næste handling','Noter'];
+  const rows = allLeads.map(l => [
+    l.score, l.navn, l.by, l.type, l.tlf||'', l.email||'', l.website||'',
+    l.kontakt||'', l.maanedlig_dkk||0, l.status||'', l.naeste_handling||'', l.noter||''
+  ].map(v => `"${String(v).replace(/"/g,"'")}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `zyflex_leads_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('⬇ CSV downloadet');
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+function openModal(title, sub, body, btns) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-sub').textContent   = sub;
+  if (body !== null) {
+    document.getElementById('modal-content').innerHTML = `<div class="modal-body">${body}</div>`;
+  }
+  document.getElementById('modal-footer').innerHTML = (btns||[]).map(b =>
+    `<button class="btn-sm ${b.cls}" onclick="${b.fn}">${b.lbl}</button>`
+  ).join('');
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function copyText(txt, msg) {
+  navigator.clipboard.writeText(txt).then(() => toast('📋 ' + (msg||'Kopieret'))).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast('📋 ' + (msg||'Kopieret'));
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+(async () => {
+  await checkAuth();
+  loadAgents();
+  loadLeads();
+  setInterval(loadAgents, 5000);
+})();
+</script>
+</body>
+</html>

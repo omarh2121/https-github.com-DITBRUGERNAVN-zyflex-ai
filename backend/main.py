@@ -34,8 +34,10 @@ from agents.data_agent     import DataAgent
 from agents.analysis_agent import AnalysisAgent
 from agents.sales_agent    import SalesAgent
 from agents.ops_agent      import OpsAgent
-from agents.prospect_agent import ProspectAgent
+from agents.prospect_agent  import ProspectAgent
+from agents.contract_hunter import ContractHunterAgent, load_all_leads, save_lead, delete_lead
 import auth as auth_module
+import owner_auth
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -659,33 +661,21 @@ def _auto_refresh_loop():
         time.sleep(30 * 60)   # 30 minutter
 
 
-# ── Serve dashboard statisk (valgfrit) ───────────────────────────────────────
-dashboard_dir = BASE_DIR / "dashboard"
-if dashboard_dir.exists():
-    app.mount("/dashboard", StaticFiles(directory=str(dashboard_dir), html=True), name="dashboard")
+# ═════════════════════════════════════════════════════════════════════════════
+# OWNER – Privat ejer-API (kræver owner_token cookie)
+# Chaufføren & det offentlige dashboard røres IKKE her.
+# ═════════════════════════════════════════════════════════════════════════════
 
-    @app.get("/")
-    def root():
-        return FileResponse(str(dashboard_dir / "index.html"))
+def _owner_token(request: Request) -> str:
+    return request.cookies.get("owner_token", "") or request.headers.get("X-Owner-Token", "")
 
-    @app.get("/login")
-    def login_page():
-        return FileResponse(str(dashboard_dir / "login.html"))
-
-    @app.get("/register")
-    def register_page():
-        return FileResponse(str(dashboard_dir / "register.html"))
-
-    @app.get("/admin")
-    def admin_page():
-        return FileResponse(str(dashboard_dir / "admin.html"))
-
-    @app.get("/driver")
-    def driver_page():
-        return FileResponse(str(dashboard_dir / "driver.html"))
+def _require_owner(request: Request):
+    tok = _owner_token(request)
+    if not owner_auth.verify_token(tok):
+        from fastapi.responses import JSONResponse
+        return None, JSONResponse({"error": "Ikke logget ind som ejer"}, status_code=401)
+    return tok, None
 
 
-# ── Start server ──────────────────────────────────────────────────────────────
-if __name__ == "__main__":
-    print("\n" + "=" * 60)
-    print("  🚕  ZY
+@app.post("/api/owner/login")
+async def owner_log
