@@ -34,6 +34,7 @@ from agents.data_agent     import DataAgent
 from agents.analysis_agent import AnalysisAgent
 from agents.sales_agent    import SalesAgent
 from agents.ops_agent      import OpsAgent
+from agents.prospect_agent import ProspectAgent
 import auth as auth_module
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -386,6 +387,13 @@ async def admin_create_invoice(request: Request):
     inv = auth_module.create_invoice(body["email"], body["company"], body["amount"], body["month"])
     return {"status": "ok", "invoice": inv}
 
+@app.get("/api/prospects")
+async def get_prospects(city: str = "Horsens"):
+    """Hent rangerede prospects – potentielle B2B og private kunder."""
+    agent = ProspectAgent()
+    result = agent.run(city)
+    return result
+
 @app.post("/api/admin/invoice/paid")
 async def admin_mark_paid(request: Request):
     _, err = _require_admin(request)
@@ -676,4 +684,5 @@ if __name__ == "__main__":
     # Auto-refresh hver 30. minut
     threading.Thread(target=_auto_refresh_loop, daemon=True).start()
 
-  
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning")
