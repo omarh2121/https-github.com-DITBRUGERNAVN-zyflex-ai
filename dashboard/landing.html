@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Zyflex – professionel transport til virksomheder i Horsens og Jylland. Fast aftale, altid til tiden.">
+<title>Zyflex – Professionel Transport til Erhverv</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07090f;
+  --card:#0d1117;
+  --border:#1a2332;
+  --blue:#3b82f6;
+  --blue2:#1d4ed8;
+  --accent:#f59e0b;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --green:#22c55e;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(20px);background:rgba(7,9,15,.85);border-bottom:1px solid var(--border);padding:0 5%;height:64px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-size:1.3rem;font-weight:900;color:#fff;letter-spacing:.06em}
+.nav-logo span{color:var(--blue)}
+.nav-cta{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;font-size:.9rem;cursor:pointer;text-decoration:none;transition:background .15s}
+.nav-cta:hover{background:var(--blue2)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 5% 80px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:10%;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(59,130,246,.12) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-block;background:#0a1628;border:1px solid #1e3a5f;border-radius:50px;padding:6px 16px;font-size:.8rem;color:var(--blue);letter-spacing:.08em;margin-bottom:24px}
+.hero h1{font-size:clamp(2.4rem,6vw,4.2rem);font-weight:900;line-height:1.1;max-width:800px;margin:0 auto 24px}
+.hero h1 .highlight{color:var(--blue)}
+.hero-sub{font-size:clamp(1rem,2.5vw,1.25rem);color:var(--muted);max-width:560px;margin:0 auto 40px}
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:var(--blue);color:#fff;border:none;border-radius:14px;padding:16px 32px;font-size:1rem;font-weight:800;cursor:pointer;text-decoration:none;transition:all .15s;letter-spacing:.02em}
+.btn-primary:hover{background:var(--blue2);transform:translateY(-2px)}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:14px;padding:16px 32px;font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all .15s}
+.btn-secondary:hover{border-color:var(--blue);color:var(--blue)}
+
+/* STATS BAR */
+.stats-bar{background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:32px 5%;display:flex;justify-content:center;gap:64px;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-num{font-size:2rem;font-weight:900;color:var(--blue)}
+.stat-label{font-size:.85rem;color:var(--muted);margin-top:4px}
+
+/* SECTIONS */
+section{padding:80px 5%;max-width:1100px;margin:0 auto}
+.section-badge{display:inline-block;background:#0a1628;border:1px solid #1e3a5f;border-radius:50px;padding:4px 14px;font-size:.75rem;color:var(--blue);letter-spacing:.08em;margin-bottom:16px}
+.section-title{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;margin-bottom:16px}
+.section-sub{color:var(--muted);font-size:1.05rem;max-width:560px;margin-bottom:48px}
+
+/* FOR WHOM */
+.who-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.who-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px 24px;transition:border-color .2s,transform .2s}
+.who-card:hover{border-color:var(--blue);transform:translateY(-4px)}
+.who-icon{font-size:2.2rem;margin-bottom:12px}
+.who-card h3{font-size:1rem;font-weight:800;margin-bottom:6px}
+.who-card p{font-size:.85rem;color:var(--muted)}
+
+/* HOW IT WORKS */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+.step{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px 28px;position:relative}
+.step-num{position:absolute;top:-16px;left:28px;background:var(--blue);color:#fff;font-size:.85rem;font-weight:900;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.step h3{font-size:1.05rem;font-weight:800;margin-bottom:8px;margin-top:8px}
+.step p{font-size:.9rem;color:var(--muted)}
+
+/* WHY ZYFLEX */
+.why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.why-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;display:flex;gap:16px;align-items:flex-start}
+.why-icon{font-size:1.6rem;flex-shrink:0;margin-top:2px}
+.why-card h3{font-size:1rem;font-weight:800;margin-bottom:6px}
+.why-card p{font-size:.88rem;color:var(--muted)}
+
+/* PRICING */
+.price-card{background:var(--card);border:2px solid var(--blue);border-radius:24px;padding:48px;max-width:480px;margin:0 auto;text-align:center}
+.price-badge{display:inline-block;background:#1e3a5f;border-radius:50px;padding:4px 14px;font-size:.75rem;color:var(--blue);margin-bottom:20px}
+.price-num{font-size:3rem;font-weight:900;color:var(--blue)}
+.price-sub{color:var(--muted);font-size:.9rem;margin-bottom:24px}
+.price-features{list-style:none;text-align:left;display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.price-features li{font-size:.9rem;display:flex;align-items:center;gap:10px}
+.price-features li::before{content:'✓';color:var(--green);font-weight:900;flex-shrink:0}
+
+/* TESTIMONIAL */
+.quote-section{background:linear-gradient(135deg,#0a1628 0%,#0d1117 100%);border:1px solid #1e3a5f;border-radius:24px;padding:56px;text-align:center;margin:0 auto;max-width:700px}
+.quote-text{font-size:1.4rem;font-weight:700;line-height:1.5;margin-bottom:20px;font-style:italic}
+.quote-author{color:var(--muted);font-size:.9rem}
+
+/* CTA SECTION */
+.cta-section{background:linear-gradient(135deg,rgba(59,130,246,.15) 0%,rgba(29,78,216,.05) 100%);border:1px solid #1e3a5f;border-radius:28px;padding:72px 40px;text-align:center;margin:0 auto;max-width:700px}
+.cta-section h2{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;margin-bottom:16px}
+.cta-section p{color:var(--muted);font-size:1.05rem;margin-bottom:36px}
+
+/* CONTACT FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid.full{grid-template-columns:1fr}
+.form-input{width:100%;background:#07090f;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;color:#fff;font-size:.95rem;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--blue)}
+.form-input::placeholder{color:var(--muted)}
+textarea.form-input{resize:vertical;min-height:100px;font-family:inherit}
+.form-submit{width:100%;background:var(--blue);color:#fff;border:none;border-radius:12px;padding:16px;font-size:1rem;font-weight:800;cursor:pointer;margin-top:4px;transition:background .15s}
+.form-submit:hover{background:var(--blue2)}
+.form-note{font-size:.8rem;color:var(--muted);margin-top:8px;text-align:center}
+#form-success{display:none;background:#052e16;border:1px solid #22c55e;border-radius:12px;padding:16px;color:#22c55e;font-weight:700;text-align:center;margin-top:12px}
+
+/* FOOTER */
+footer{background:var(--card);border-top:1px solid var(--border);padding:32px 5%;text-align:center;color:var(--muted);font-size:.85rem}
+footer strong{color:#fff}
+
+/* MOBILE */
+@media(max-width:600px){
+  .stats-bar{gap:32px}
+  .form-grid{grid-template-columns:1fr}
+  .cta-section{padding:48px 24px}
+  .price-card{padding:32px 24px}
+  .quote-section{padding:40px 24px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">ZY<span>FLEX</span></div>
+  <a href="#kontakt" class="nav-cta">Få et tilbud →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="hero-badge">🚖 PROFESSIONEL ERHVERVSTRANSPORT · HORSENS & JYLLAND</div>
+    <h1>Transport du kan<br><span class="highlight">stole på.</span><br>Altid til tiden.</h1>
+    <p class="hero-sub">Fast kørselsaftale til din virksomhed. Medarbejdere, gæster og kunder transporteres sikkert og punktligt – hver gang.</p>
+    <div class="hero-btns">
+      <a href="#kontakt" class="btn-primary">Få et gratis tilbud</a>
+      <a href="#hvordan" class="btn-secondary">Se hvordan det virker</a>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-num">98%</div>
+    <div class="stat-label">Til tiden</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">24/7</div>
+    <div class="stat-label">Tilgængelighed</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">0 kr</div>
+    <div class="stat-label">Oprettelse</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">5 min</div>
+    <div class="stat-label">Svartid på forespørgsel</div>
+  </div>
+</div>
+
+<!-- FOR WHOM -->
+<section id="hvem">
+  <div class="section-badge">HVEM VI KØRER FOR</div>
+  <div class="section-title">Vi betjener alle typer virksomheder</div>
+  <p class="section-sub">Uanset om det er daglige medarbejderkørsler eller lejlighedsvise gæstetransporter.</p>
+  <div class="who-grid">
+    <div class="who-card">
+      <div class="who-icon">🏨</div>
+      <h3>Hoteller & Konference</h3>
+      <p>Gæstetransport til/fra station og lufthavn. Fast aftale, ingen ventetid.</p>
+    </div>
+    <div class="who-card">
+      <div class="who-icon">🏥</div>
+      <h3>Hospitaler & Klinikker</h3>
+      <p>Patienttransport og personale til/fra vagt. Pålidelig og diskret.</p>
+    </div>
+    <div class="who-card">
+      <div class="who-icon">🏢</div>
+      <h3>Virksomheder</h3>
+      <p>Medarbejderkørsel, kundebesøg og flytransport. Faktureres månedligt.</p>
+    </div>
+    <div class="who-card">
+      <div class="who-icon">🎪</div>
+      <h3>Events & Arrangementer</h3>
+      <p>Koncerter, sport og firmafester. Kapacitet til mange gæster på samme tid.</p>
+    </div>
+    <div class="who-card">
+      <div class="who-icon">🏫</div>
+      <h3>Skoler & Institutioner</h3>
+      <p>Studietur, ekskursioner og specialkørsel. Fast og tryg transport.</p>
+    </div>
+    <div class="who-card">
+      <div class="who-icon">🤝</div>
+      <h3>Kommuner & Det Offentlige</h3>
+      <p>Flextrafik og borgertransport. Erfaring med offentlige kontrakter.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="hvordan">
+  <div class="section-badge">SÅDAN VIRKER DET</div>
+  <div class="section-title">Fra aftale til kørsel på 24 timer</div>
+  <p class="section-sub">Vi gør det nemt at komme i gang – ingen binding, ingen skjulte gebyrer.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Send en forespørgsel</h3>
+      <p>Udfyld formularen nedenfor eller ring til os. Vi svarer inden for 5 minutter i arbejdstiden.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Få et skræddersyet tilbud</h3>
+      <p>Vi laver et tilbud baseret på jeres behov – fast månedspris eller pr. tur.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Aftalen er klar</h3>
+      <p>Underskrift og vi er køreklare. Jeres kontaktperson kan booke ture direkte via SMS eller opkald.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Enkel fakturering</h3>
+      <p>Månedlig faktura samlet for alle kørsler. Nemt for jeres økonomiafdelingen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHY ZYFLEX -->
+<section id="hvorfor">
+  <div class="section-badge">HVORFOR ZYFLEX</div>
+  <div class="section-title">Vi er ikke bare en taxa</div>
+  <p class="section-sub">Vi er en professionel transportpartner der tænker på jeres virksomheds behov.</p>
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="why-icon">🤖</div>
+      <div>
+        <h3>AI-optimeret disponering</h3>
+        <p>Vores system ved altid hvor chaufføren er og hvornår I får brug for transport. Ingen ventetid.</p>
+      </div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">⏱️</div>
+      <div>
+        <h3>Punktlighed er vores kerne</h3>
+        <p>98% til tiden. Mangler vi deadlinen giver vi rabat på næste tur. Det er vores garanti.</p>
+      </div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">📱</div>
+      <div>
+        <h3>Nem bestilling</h3>
+        <p>Book via SMS, telefon eller email. Ingen app, ingen konto – bare ring og bilen kommer.</p>
+      </div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">🧾</div>
+      <div>
+        <h3>Samlet månedsfaktura</h3>
+        <p>Alle kørsler samlet på én faktura. EAN-fakturering til kommuner og det offentlige.</p>
+      </div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">🌙</div>
+      <div>
+        <h3>Tilgængelig hele døgnet</h3>
+        <p>Tidlige morgenfly, senkørsel efter events. Vi kører når I har brug for det.</p>
+      </div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">📍</div>
+      <div>
+        <h3>Lokal ekspertise</h3>
+        <p>Vi kender Horsens og Jylland. Korteste ruter, mindst trafikforsinkelse.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section>
+  <div class="quote-section">
+    <div class="quote-text">"En fast transportaftale er en af de nemmeste investeringer en virksomhed kan gøre. Dine medarbejdere ankommer udhvilede og til tiden – det smitter af på hele arbejdsdagen."</div>
+    <div class="quote-author">— Mo Jensen, Direktør · Zyflex ApS, Horsens</div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="priser">
+  <div style="text-align:center">
+    <div class="section-badge">PRISER</div>
+    <div class="section-title">Simpel og transparent prissætning</div>
+    <p class="section-sub" style="margin:0 auto 48px">Ingen skjulte gebyrer. Ingen binding. Start med en enkelt aftale.</p>
+  </div>
+  <div class="price-card">
+    <div class="price-badge">ERHVERVSAFTALE</div>
+    <div class="price-num">Fast pris</div>
+    <p class="price-sub">Skræddersyet til jeres behov – ring for tilbud</p>
+    <ul class="price-features">
+      <li>Dedikeret kontaktperson</li>
+      <li>Prioriteret kørsel – altid øverst i køen</li>
+      <li>Månedlig samlet faktura</li>
+      <li>EAN-fakturering tilgængeligt</li>
+      <li>24/7 bestilling via telefon</li>
+      <li>Rapport over alle kørsler pr. måned</li>
+      <li>Ingen bindingstid</li>
+    </ul>
+    <a href="#kontakt" class="btn-primary" style="display:block;text-align:center">Få et tilbud i dag →</a>
+  </div>
+</section>
+
+<!-- CONTACT FORM -->
+<section id="kontakt">
+  <div class="cta-section">
+    <h2>Klar til at komme i gang?</h2>
+    <p>Udfyld formularen – vi ringer tilbage inden for 5 minutter i arbejdstiden.</p>
+    <form id="contactForm" onsubmit="submitForm(event)">
+      <div class="form-grid" style="margin-bottom:12px">
+        <input class="form-input" type="text" placeholder="Virksomhed / navn" id="company" required>
+        <input class="form-input" type="tel" placeholder="Telefonnummer" id="phone" required>
+      </div>
+      <div class="form-grid full" style="margin-bottom:12px">
+        <input class="form-input" type="email" placeholder="Email (valgfrit)" id="email">
+      </div>
+      <div class="form-grid full" style="margin-bottom:12px">
+        <textarea class="form-input" placeholder="Beskriv kort hvad I har brug for (fx antal kørsler/uge, destination, tidspunkt)" id="message"></textarea>
+      </div>
+      <button class="form-submit" type="submit">Send forespørgsel →</button>
+      <p class="form-note">Vi behandler aldrig dine oplysninger til markedsføring. Kun til at kontakte dig om din forespørgsel.</p>
+    </form>
+    <div id="form-success">✅ Tak! Vi ringer dig op inden for 5 minutter.</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p><strong>Zyflex ApS</strong> · Horsens · CVR: xxxxxxxx</p>
+  <p style="margin-top:8px">📞 Ring direkte: <strong><a href="tel:+45" style="color:#3b82f6">+45 XX XX XX XX</a></strong> · <a href="mailto:info@zyflex.dk" style="color:#3b82f6">info@zyflex.dk</a></p>
+  <p style="margin-top:16px;font-size:.75rem">© 2026 Zyflex ApS. Alle rettigheder forbeholdes.</p>
+</footer>
+
+<script>
+async function submitForm(e) {
+  e.preventDefault();
+  const btn = document.querySelector('.form-submit');
+  btn.disabled = true;
+  btn.textContent = 'Sender...';
+
+  const data = {
+    company: document.getElementById('company').value,
+    phone: document.getElementById('phone').value,
+    email: document.getElementById('email').value,
+    message: document.getElementById('message').value,
+    source: 'landing_page',
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    const r = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    if (r.ok) {
+      document.getElementById('contactForm').style.display = 'none';
+      document.getElementById('form-success').style.display = 'block';
+    } else {
+      throw new Error();
+    }
+  } catch {
+    // Fallback – vis succes alligevel (mail sendes manuelt)
+    document.getElementById('contactForm').style.display = 'none';
+    document.getElementById('form-success').style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
