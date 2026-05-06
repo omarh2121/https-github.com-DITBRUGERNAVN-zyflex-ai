@@ -678,4 +678,211 @@ def _require_owner(request: Request):
 
 
 @app.post("/api/owner/login")
-async def owner_log
+async def owner_login(request: Request):
+    body = await request.json()
+    pin  = str(body.get("pin", "")).strip()
+    tok  = owner_auth.verify_pin(pin)
+    if not tok:
+        return {"status": "error", "message": "Forkert kode"}
+    from fastapi.responses import JSONResponse
+    resp = JSONResponse({"status": "ok"})
+    resp.set_cookie("owner_token", tok, max_age=86400 * 30, httponly=True, samesite="lax")
+    return resp
+
+
+@app.post("/api/owner/logout")
+async def owner_logout(request: Request):
+    tok = _owner_token(request)
+    owner_auth.revoke_token(tok)
+    from fastapi.responses import JSONResponse
+    resp = JSONResponse({"status": "ok"})
+    resp.delete_cookie("owner_token")
+    return resp
+
+
+@app.get("/api/owner/agents")
+async def owner_agents(request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    agents_info = [
+        {"id":"data_agent",      "navn":"Data Agent",      "ikon":"📡","formål":"Henter vejr, events, GPS-zoner","skills":["Open-Meteo","Overpass/OSM","Ticketmaster"]},
+        {"id":"analysis_agent",  "navn":"Analysis Agent",  "ikon":"🧠","formål":"Scorer zoner 0-100 (events 32%, tid 24%, vejr 22%, lokation 22%)","skills":["Zone scoring","Distance decay","Feedback integration","Earnings estimate"]},
+        {"id":"sales_agent",     "navn":"Sales Agent",     "ikon":"🤝","formål":"Finder B2B leads med tlf og adresse","skills":["B2B lead finder","Horsens POI database","Outreach generator"]},
+        {"id":"ops_agent",       "navn":"Ops Agent",       "ikon":"🗺","formål":"Genererer chauffør-briefing og køreplan","skills":["Driver briefing","Rush hour detection","Route optimization"]},
+        {"id":"event_agent",     "navn":"Event Agent",     "ikon":"🎉","formål":"Scraper live events og festivaler","skills":["CASA Arena scraper","Billetto","Eventbrite","24 danske festivaler 2026"]},
+        {"id":"contract_hunter", "navn":"Contract Hunter", "ikon":"🎯","formål":"Finder potentielle transportkontrakter","skills":["Lead scoring","Email generator","Opkaldsscript","Multi-by søgning","Status tracking"]},
+    ]
+    with STATE_LOCK:
+        for a in agents_info:
+            state = AGENT_STATE.get(a["id"], {})
+            a["status"]    = state.get("status", "idle")
+            a["besked"]    = state.get("message", "–")
+            a["progress"]  = state.get("progress", 0)
+    return {"agents": agents_info}
+
+
+@app.get("/api/owner/leads")
+async def owner_leads(request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    leads = load_all_leads()
+    if not leads:
+        agent = ContractHunterAgent()
+        result = agent.run("alle")
+        leads = result["alle_leads"]
+    city   = request.query_params.get("by", "")
+    type_  = request.query_params.get("type", "")
+    status = request.query_params.get("status", "")
+    search = request.query_params.get("q", "").lower()
+    if city:   leads = [l for l in leads if l.get("by","").lower() == city.lower()]
+    if type_:  leads = [l for l in leads if l.get("type","").lower() == type_.lower()]
+    if status: leads = [l for l in leads if l.get("status","") == status]
+    if search: leads = [l for l in leads if search in json.dumps(l, ensure_ascii=False).lower()]
+    leads_sorted = sorted(leads, key=lambda x: x.get("score",0), reverse=True)
+    return {
+        "leads": leads_sorted,
+        "total": len(leads_sorted),
+        "monthly_pot": sum(l.get("maanedlig_dkk",0) for l in leads_sorted if l.get("score",0) >= 75),
+    }
+
+
+@app.post("/api/owner/leads")
+async def owner_add_lead(request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    body = await request.json()
+    lead = save_lead(body)
+    return {"status": "ok", "lead": lead}
+
+
+@app.put("/api/owner/leads/{lead_id}")
+async def owner_update_lead(lead_id: int, request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    body = await request.json()
+    body["id"] = lead_id
+    lead = save_lead(body)
+    return {"status": "ok", "lead": lead}
+
+
+@app.delete("/api/owner/leads/{lead_id}")
+async def owner_delete_lead(lead_id: int, request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    ok = delete_lead(lead_id)
+    return {"status": "ok" if ok else "not_found"}
+
+
+@app.get("/api/owner/tasks")
+async def owner_tasks(request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    with STATE_LOCK:
+        return {"agents": AGENT_STATE.copy(), "is_running": IS_RUNNING}
+
+
+@app.get("/api/owner/report")
+async def owner_report(request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    return get_report()
+
+
+@app.post("/api/contract-hunter/generate-email")
+async def contract_email(request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    body   = await request.json()
+    lead   = body.get("lead", {})
+    sender = body.get("sender_name", "Mo Jensen")
+    phone  = body.get("sender_phone", "")
+    agent  = ContractHunterAgent()
+    result = agent.generate_email(lead, sender, phone)
+    return result
+
+
+@app.post("/api/contract-hunter/generate-call-script")
+async def contract_call_script(request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    body  = await request.json()
+    lead  = body.get("lead", {})
+    agent = ContractHunterAgent()
+    script = agent.generate_call_script(lead)
+    return {"script": script}
+
+
+@app.get("/api/contract-hunter/search")
+async def contract_search(request: Request):
+    _, err = _require_owner(request)
+    if err: return err
+    city  = request.query_params.get("city", "alle")
+    agent = ContractHunterAgent()
+    return agent.run(city)
+
+
+# ── Serve dashboard statisk (valgfrit) ───────────────────────────────────────
+dashboard_dir = BASE_DIR / "dashboard"
+if dashboard_dir.exists():
+    app.mount("/dashboard", StaticFiles(directory=str(dashboard_dir), html=True), name="dashboard")
+
+    @app.get("/")
+    def root():
+        return FileResponse(str(dashboard_dir / "landing.html"))
+
+    @app.get("/app")
+    def app_page():
+        return FileResponse(str(dashboard_dir / "index.html"))
+
+    @app.get("/login")
+    def login_page():
+        return FileResponse(str(dashboard_dir / "login.html"))
+
+    @app.get("/register")
+    def register_page():
+        return FileResponse(str(dashboard_dir / "register.html"))
+
+    @app.get("/admin")
+    def admin_page():
+        return FileResponse(str(dashboard_dir / "admin.html"))
+
+    @app.get("/driver")
+    def driver_page():
+        return FileResponse(str(dashboard_dir / "driver.html"))
+
+    @app.get("/owner/login")
+    def owner_login_page():
+        return FileResponse(str(dashboard_dir / "owner_login.html"))
+
+    @app.get("/owner/dashboard")
+    def owner_dashboard_page():
+        return FileResponse(str(dashboard_dir / "owner_dashboard.html"))
+
+    @app.get("/owner")
+    def owner_redirect():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse("/owner/login")
+
+
+# ── Contact form (landing page) ───────────────────────────────────────────────
+_CONTACTS_FILE = DATA_DIR / "contacts.json"
+
+@app.post("/api/contact")
+async def submit_contact(request: Request):
+    try:
+        data = await request.json()
+        contacts = []
+        if _CONTACTS_FILE.exists():
+            try:
+                contacts = json.loads(_CONTACTS_FILE.read_text(encoding="utf-8"))
+            except Exception:
+                contacts = []
+        contacts.append({**data, "id": secrets.token_hex(6), "read": False})
+        _CONTACTS_FILE.write_text(json.dumps(contacts, ensure_ascii=False, indent=2), encoding="utf-8")
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
+@app.get("/api/owner/contacts")
+async def get_contacts(request: Request):
+    _require_owner(
