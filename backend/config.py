@@ -13,6 +13,7 @@ load_dotenv()
 # API KEYS (loaded from .env file)
 # ---------------------------------------------------------------------------
 TICKETMASTER_API_KEY = os.getenv("TICKETMASTER_API_KEY", "")
+BILLETTO_API_KEY     = os.getenv("BILLETTO_API_KEY", "")  # Primær dansk event-kilde
 
 # ---------------------------------------------------------------------------
 # GEOGRAPHIC SETTINGS

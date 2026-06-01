@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#080c14">
+<title>Zyflex Owner – Login</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#080c14;color:#fff;display:flex;align-items:center;justify-content:center;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.card{background:#0f1520;border:1px solid #1e2d45;border-radius:24px;padding:48px 40px;
+  width:100%;max-width:400px;text-align:center}
+.logo{font-size:2.5rem;margin-bottom:12px}
+.title{font-size:1.5rem;font-weight:900;color:#60a5fa;letter-spacing:.06em}
+.sub{color:#4a5568;font-size:.9rem;margin-top:6px;margin-bottom:36px}
+.pin-label{color:#6b7280;font-size:.8rem;letter-spacing:.1em;text-align:left;margin-bottom:8px}
+.pin-input{width:100%;background:#080c14;border:2px solid #1e2d45;border-radius:14px;
+  padding:16px 20px;color:#fff;font-size:1.5rem;letter-spacing:.4em;text-align:center;
+  outline:none;transition:border-color .2s;font-family:monospace}
+.pin-input:focus{border-color:#3b82f6}
+.pin-input.error{border-color:#ef4444;animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.login-btn{width:100%;background:#3b82f6;color:#fff;border:none;border-radius:14px;
+  padding:16px;font-size:1rem;font-weight:900;cursor:pointer;margin-top:20px;
+  transition:background .15s,transform .1s;letter-spacing:.04em}
+.login-btn:hover{background:#2563eb}
+.login-btn:active{transform:scale(.98)}
+.login-btn:disabled{background:#1e2d45;color:#4a5568;cursor:not-allowed}
+.err{color:#ef4444;font-size:.85rem;margin-top:12px;min-height:20px}
+.badge{display:inline-block;background:#0a1628;border:1px solid #1e3a5f;border-radius:50px;
+  padding:4px 12px;font-size:.7rem;color:#3b82f6;letter-spacing:.08em;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🔐</div>
+  <div class="title">ZYFLEX OWNER</div>
+  <div class="sub">Privat ejerdashboard – kun for Mo</div>
+
+  <div class="pin-label">ADGANGSKODE</div>
+  <input class="pin-input" type="password" id="pin" maxlength="6"
+    placeholder="••••" autocomplete="off" inputmode="numeric"
+    onkeydown="if(event.key==='Enter')doLogin()">
+
+  <button class="login-btn" id="btn" onclick="doLogin()">LOG IND →</button>
+  <div class="err" id="err"></div>
+  <div class="badge">🔒 PRIVAT ADGANG</div>
+</div>
+<script>
+const API = location.origin;
+document.getElementById('pin').focus();
+
+async function doLogin() {
+  const pin = document.getElementById('pin').value.trim();
+  const btn = document.getElementById('btn');
+  const err = document.getElementById('err');
+  const inp = document.getElementById('pin');
+  if (!pin) return;
+  btn.disabled = true; btn.textContent = 'Tjekker...';
+  err.textContent = '';
+  try {
+    const r = await fetch(`${API}/api/owner/login`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({pin})
+    });
+    const d = await r.json();
+    if (d.status === 'ok') {
+      btn.textContent = '✅ Adgang...';
+      location.href = '/owner/dashboard';
+    } else {
+      inp.classList.add('error');
+      err.textContent = 'Forkert kode – prøv igen';
+      btn.disabled = false; btn.textContent = 'LOG IND →';
+      inp.value = '';
+      setTimeout(() => inp.classList.remove('error'), 400);
+    }
+  } catch(e) {
+    err.textContent = 'Fejl – prøv igen';
+    btn.disabled = false; btn.textContent = 'LOG IND →';
+  }
+}
+</script>
+</body>
+</html>

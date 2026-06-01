@@ -16,6 +16,7 @@ import sys
 import os
 import json
 import logging
+import secrets
 import threading
 import time
 from pathlib import Path
@@ -38,6 +39,29 @@ from agents.prospect_agent  import ProspectAgent
 from agents.contract_hunter import ContractHunterAgent, load_all_leads, save_lead, delete_lead
 import auth as auth_module
 import owner_auth
+import driver_auth
+
+# Thranw – hovedagent (orkestrerer dine eksisterende agenter)
+from thranw_router import router as thranw_router
+
+# ── Telemetry router (driver data collection) ─────────────────────────────────
+try:
+    from db import init_db
+    from telemetry_router import router as telemetry_router
+    _TELEMETRY_LOADED = True
+except Exception as _tel_err:
+    _TELEMETRY_LOADED = False
+    import logging as _log
+    _log.getLogger("main").warning(f"Telemetry router ikke indlæst: {_tel_err}")
+
+# ── LangGraph Multi-Agent AI Router (NYT – rører ikke eksisterende endpoints) ─
+try:
+    from ai_router import router as ai_router
+    _AI_ROUTER_LOADED = True
+except Exception as _ai_err:
+    _AI_ROUTER_LOADED = False
+    import logging as _log
+    _log.getLogger("main").warning(f"AI router ikke indlæst: {_ai_err}")
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -50,12 +74,43 @@ logger = logging.getLogger("main")
 # ── FastAPI app ───────────────────────────────────────────────────────────────
 app = FastAPI(title="Zyflex AI", version="2.0")
 
+# ── Startup event (kører ved uvicorn start på Render og lokalt) ───────────────
+@app.on_event("startup")
+async def on_startup():
+    """Initialisér database og start baggrunds-agenter."""
+    if _TELEMETRY_LOADED:
+        try:
+            init_db()
+        except Exception as e:
+            import logging as _l
+            _l.getLogger("main").warning(f"DB startup advarsel: {e}")
+    # Start agenter i baggrunden (kun én gang)
+    threading.Thread(target=_run_all_agents, args=("Horsens",), daemon=True).start()
+    threading.Thread(target=_auto_refresh_loop, daemon=True).start()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],    # Tillad dashboard at kalde API'en lokalt
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Inkludér Thranw-routeren (giver /api/thranw/recommend, /zones, /health)
+app.include_router(thranw_router)
+
+# Inkludér LangGraph AI-routeren (giver /ai/recommendation, /ai/hotspots, /ai/heatmap, /ai/leads)
+if _AI_ROUTER_LOADED:
+    app.include_router(ai_router)
+    logger.info("✅ LangGraph AI router indlæst – /ai/* endpoints aktive")
+
+# Inkludér Telemetry-routeren (giver /api/telemetry/*)
+if _TELEMETRY_LOADED:
+    app.include_router(telemetry_router)
+    try:
+        init_db()
+        logger.info("✅ Telemetry router + database initialiseret")
+    except Exception as _db_err:
+        logger.warning(f"DB init advarsel: {_db_err}")
 
 # ── Global state (delt mellem API og agent-tråde) ────────────────────────────
 BASE_DIR = Path(__file__).parent.parent
@@ -677,6 +732,32 @@ def _require_owner(request: Request):
     return tok, None
 
 
+@app.post("/api/driver/login")
+async def driver_login(request: Request):
+    body = await request.json()
+    pin  = str(body.get("pin", "")).strip()
+    tok  = driver_auth.verify_pin(pin)
+    if not tok:
+        return {"status": "error", "message": "Forkert kode"}
+    from fastapi.responses import JSONResponse
+    # Returnér token i body OG som cookie (virker fra både Lovable og lokal HTML)
+    resp = JSONResponse({"status": "ok", "token": tok})
+    resp.set_cookie("driver_token", tok, max_age=86400 * 30, httponly=False, samesite="lax")
+    return resp
+
+
+@app.post("/api/driver/logout")
+async def driver_logout(request: Request):
+    tok = (request.cookies.get("driver_token", "")
+           or request.headers.get("X-Driver-Token", "")
+           or (request.headers.get("Authorization", "")[7:] if request.headers.get("Authorization", "").startswith("Bearer ") else ""))
+    driver_auth.revoke_token(tok)
+    from fastapi.responses import JSONResponse
+    resp = JSONResponse({"status": "ok"})
+    resp.delete_cookie("driver_token")
+    return resp
+
+
 @app.post("/api/owner/login")
 async def owner_login(request: Request):
     body = await request.json()
@@ -685,8 +766,9 @@ async def owner_login(request: Request):
     if not tok:
         return {"status": "error", "message": "Forkert kode"}
     from fastapi.responses import JSONResponse
-    resp = JSONResponse({"status": "ok"})
-    resp.set_cookie("owner_token", tok, max_age=86400 * 30, httponly=True, samesite="lax")
+    # Returnér token i body (Lovable) og som cookie (lokal HTML)
+    resp = JSONResponse({"status": "ok", "token": tok})
+    resp.set_cookie("owner_token", tok, max_age=86400 * 30, httponly=False, samesite="lax")
     return resp
 
 
@@ -847,8 +929,17 @@ if dashboard_dir.exists():
         return FileResponse(str(dashboard_dir / "admin.html"))
 
     @app.get("/driver")
-    def driver_page():
+    def driver_page(request: Request):
+        # Kræver PIN-login
+        tok = request.cookies.get("driver_token", "")
+        if not driver_auth.verify_token(tok):
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse("/driver/login")
         return FileResponse(str(dashboard_dir / "driver.html"))
+
+    @app.get("/driver/login")
+    def driver_login_page():
+        return FileResponse(str(dashboard_dir / "driver_login.html"))
 
     @app.get("/owner/login")
     def owner_login_page():
@@ -863,9 +954,25 @@ if dashboard_dir.exists():
         from fastapi.responses import RedirectResponse
         return RedirectResponse("/owner/login")
 
+    # ── Zyflex Demand Radar – nye routes ─────────────────────────────────────
+    @app.get("/driver-event")
+    def driver_event_page():
+        """Chauffør dashboard – mobile-first, score zoner, GO NOW."""
+        return FileResponse(str(dashboard_dir / "driver-event.html"))
+
+    @app.get("/owner-event")
+    def owner_event_page():
+        """Ejer planlægnings-dashboard – ugeplan, biler pr. zone, leads."""
+        return FileResponse(str(dashboard_dir / "owner-event.html"))
+
+    @app.get("/event-radar")
+    def event_radar_page():
+        """Salgs landing page – Zyflex Demand Radar SaaS demo."""
+        return FileResponse(str(dashboard_dir / "event-radar.html"))
+
 
 # ── Contact form (landing page) ───────────────────────────────────────────────
-_CONTACTS_FILE = DATA_DIR / "contacts.json"
+_CONTACTS_FILE = BASE_DIR / "data" / "contacts.json"
 
 @app.post("/api/contact")
 async def submit_contact(request: Request):
@@ -885,4 +992,27 @@ async def submit_contact(request: Request):
 
 @app.get("/api/owner/contacts")
 async def get_contacts(request: Request):
-    _require_owner(
+    _require_owner(request)
+    if _CONTACTS_FILE.exists():
+        try:
+            return json.loads(_CONTACTS_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+# ── Start server ──────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    print("\n" + "=" * 60)
+    print("  🚕  ZYFLEX AI – COMMAND CENTER")
+    print(f"  📅  {datetime.now().strftime('%A %d. %B %Y, kl. %H:%M')}")
+    print("=" * 60)
+    print("  🌐  Server:    http://localhost:8000")
+    print("  📊  Dashboard: http://localhost:8000")
+    print("  🔌  API:       http://localhost:8000/api/status")
+    print("=" * 60)
+    print("  Åbn http://localhost:8000 i din browser")
+    print("  Tryk Ctrl+C for at stoppe\n")
+
+    # Agenter og DB startes nu via @app.on_event("startup") – virker både lokalt og på Render
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning")

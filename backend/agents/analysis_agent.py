@@ -464,4 +464,48 @@ class AnalysisAgent:
         zone_up = name.upper()
         if score >= 85:
             base = f"⚡ KØR TIL {zone_up} NU – ekstremt høj efterspørgsel!"
-        elif score >= 7
+        elif score >= 70:
+            base = f"🔥 KØR TIL {zone_up} – høj efterspørgsel"
+        elif score >= 55:
+            base = f"📈 {name} – god mulighed (~{earn} kr/t)"
+        elif score >= 35:
+            base = f"📍 {name} – moderat aktivitet"
+        else:
+            base = f"⚠️ Undgå {name} foreløbig – lav efterspørgsel"
+
+        if events:
+            ev = events[0]
+            base += f" · 🎉 {ev['name']} ({ev.get('attendance',0):,} gæster)"
+        return base
+
+    # ── Utility ──────────────────────────────────────────────────────────────
+
+    def _dist(self, lat1, lon1, lat2, lon2) -> float:
+        R = 6371
+        dl = math.radians(lat2 - lat1)
+        dg = math.radians(lon2 - lon1)
+        a  = math.sin(dl/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dg/2)**2
+        return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    def _days_until(self, date_str: str, now: datetime):
+        """Returner antal dage til event-dato. None hvis ingen dato."""
+        if not date_str:
+            return None
+        for fmt in ("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y"):
+            try:
+                event_date = datetime.strptime(date_str[:10], fmt)
+                return max(0, (event_date.date() - now.date()).days)
+            except Exception:
+                continue
+        return None
+
+    def _grade(self, score: int) -> str:
+        if score >= 85: return "⚡ Ekstrem efterspørgsel"
+        if score >= 70: return "🔥 Høj efterspørgsel"
+        if score >= 55: return "📈 Middel efterspørgsel"
+        if score >= 35: return "📍 Lav efterspørgsel"
+        return "⚪ Meget lav"
+
+    def _update(self, msg: str):
+        logger.info(f"[AnalysisAgent] {msg}")
+        self.status_callback(msg)

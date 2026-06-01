@@ -138,6 +138,32 @@ tbody td{padding:10px 12px;vertical-align:top}
   transition:transform .25s;pointer-events:none;white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
+/* ── GO NOW Banner ── */
+#go-now-banner{
+  display:none;position:sticky;top:49px;z-index:90;
+  background:linear-gradient(90deg,#7f1d1d,#991b1b,#7f1d1d);
+  border-bottom:2px solid #ef4444;
+  padding:14px 20px;
+  animation:gonow-pulse 1.2s ease-in-out infinite;
+}
+#go-now-banner.active{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+@keyframes gonow-pulse{0%,100%{background:linear-gradient(90deg,#7f1d1d,#991b1b,#7f1d1d)}
+  50%{background:linear-gradient(90deg,#991b1b,#b91c1c,#991b1b)}}
+.gonow-label{font-size:1.05rem;font-weight:900;color:#fca5a5;letter-spacing:.06em;white-space:nowrap}
+.gonow-zone{font-size:1.2rem;font-weight:900;color:#fff}
+.gonow-score{font-size:1rem;font-weight:900;color:#fca5a5;white-space:nowrap}
+.gonow-earn{font-size:.85rem;color:#fca5a5;font-weight:700;white-space:nowrap}
+.gonow-reason{font-size:.78rem;color:#fca5a5;opacity:.85;flex:1;min-width:0}
+
+/* ── AI Rec Section ── */
+.ai-rec-card{background:#080c14;border:1.5px solid #1e3a5f;border-radius:14px;
+  padding:16px;display:flex;flex-direction:column;gap:8px}
+.ai-rec-zone{font-size:1.5rem;font-weight:900;color:#fff}
+.ai-rec-score-bar{height:6px;border-radius:3px;background:#1e2d45;overflow:hidden;margin:4px 0}
+.ai-rec-score-fill{height:100%;border-radius:3px;transition:width .4s}
+.ai-rec-meta{display:flex;gap:12px;flex-wrap:wrap;font-size:.75rem;color:#64748b}
+.ai-rec-updated{font-size:.68rem;color:#374151;margin-top:4px}
+
 /* ── Mobile ── */
 @media(max-width:600px){
   .section{padding:12px}
@@ -159,7 +185,28 @@ tbody td{padding:10px 12px;vertical-align:top}
   </div>
 </div>
 
+<!-- GO NOW Banner -->
+<div id="go-now-banner">
+  <div class="gonow-label">🚨 GO NOW</div>
+  <div class="gonow-zone" id="gn-zone">–</div>
+  <div class="gonow-score" id="gn-score">–</div>
+  <div class="gonow-earn" id="gn-earn">–</div>
+  <div class="gonow-reason" id="gn-reason">–</div>
+</div>
+
 <div class="content">
+
+  <!-- AI Recommendation -->
+  <div class="section" id="ai-rec-section" style="border-color:#1e3a5f">
+    <div class="section-hdr">
+      <div class="section-title">🤖 AI ANBEFALING – LANGGRAPH</div>
+      <div class="section-badge" id="ai-rec-badge">Henter...</div>
+      <button class="btn-sm btn-ghost" style="margin-left:auto" onclick="loadAIRecommendation(true)">🔄 Opdater</button>
+    </div>
+    <div id="ai-rec-content">
+      <div style="color:#4a5568;font-size:.8rem">Kører LangGraph pipeline...</div>
+    </div>
+  </div>
 
   <!-- Stats -->
   <div class="stats-row" id="stats-row">
@@ -180,6 +227,18 @@ tbody td{padding:10px 12px;vertical-align:top}
     </div>
     <div class="agents-grid" id="agents-grid">
       <div style="color:#4a5568;font-size:.8rem">Indlæser agenter...</div>
+    </div>
+  </div>
+
+  <!-- LIVE EVENT SOURCES -->
+  <div class="section" id="event-sources-section" style="border-color:#1a2d1a">
+    <div class="section-hdr">
+      <div class="section-title">📡 LIVE EVENT SOURCES</div>
+      <div class="section-badge" id="evt-src-badge">Henter...</div>
+      <button class="btn-sm btn-ghost" style="margin-left:auto" onclick="loadEventSources()">🔄 Tjek</button>
+    </div>
+    <div id="evt-src-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+      <div style="color:#4a5568;font-size:.8rem">Indlæser event-kilder...</div>
     </div>
   </div>
 
@@ -585,4 +644,414 @@ function exportCSV() {
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────
-function openModal(title, sub, body, bt
+function openModal(title, sub, body, btns) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-sub').textContent   = sub;
+  if (body !== null) {
+    document.getElementById('modal-content').innerHTML = `<div class="modal-body">${body}</div>`;
+  }
+  document.getElementById('modal-footer').innerHTML = (btns||[]).map(b =>
+    `<button class="btn-sm ${b.cls}" onclick="${b.fn}">${b.lbl}</button>`
+  ).join('');
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function copyText(txt, msg) {
+  navigator.clipboard.writeText(txt).then(() => toast('📋 ' + (msg||'Kopieret'))).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast('📋 ' + (msg||'Kopieret'));
+  });
+}
+
+// ── AI RECOMMENDATION (LangGraph) ────────────────────────────────────────
+async function loadAIRecommendation(fresh = false) {
+  try {
+    document.getElementById('ai-rec-badge').textContent = 'Kører pipeline...';
+    const url = `${API}/ai/recommendation?city=Horsens${fresh ? '&fresh=true' : ''}`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+
+    // GO NOW banner
+    const banner = document.getElementById('go-now-banner');
+    if (d.go_now) {
+      document.getElementById('gn-zone').textContent  = d.recommended_zone || '–';
+      document.getElementById('gn-score').textContent = `Score: ${d.score}/100`;
+      document.getElementById('gn-earn').textContent  = `~${d.earn_dkk_per_hour || 0} kr/time`;
+      document.getElementById('gn-reason').textContent = (d.reason || '').replace('GO NOW – ', '');
+      banner.classList.add('active');
+    } else {
+      banner.classList.remove('active');
+    }
+
+    // Scorefarve
+    const score = d.score || 0;
+    const col = score >= 85 ? '#ef4444' : score >= 70 ? '#f59e0b' : score >= 50 ? '#3b82f6' : '#4a5568';
+    const grade = d.grade || '–';
+    const topZones = d.top_zones || [];
+    const cached = d.cached ? ' · ⚡ Cache' : '';
+    const ts = d.timestamp ? new Date(d.timestamp).toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}) : '–';
+
+    document.getElementById('ai-rec-badge').textContent =
+      `Score ${score}/100${cached}`;
+
+    const topZonesHtml = topZones.slice(0, 5).map((z, i) => {
+      const zCol = z.score >= 85 ? '#ef4444' : z.score >= 70 ? '#f59e0b' : z.score >= 50 ? '#3b82f6' : '#4a5568';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #111827">
+        <div style="width:20px;text-align:center;font-size:.75rem;color:#4a5568">${i+1}</div>
+        <div style="flex:1;font-size:.82rem;font-weight:${i===0?'800':'600'}">${z.name}</div>
+        <div style="font-size:.85rem;font-weight:900;color:${zCol}">${z.score}</div>
+        <div style="font-size:.72rem;color:#22c55e;min-width:60px;text-align:right">~${z.earn_dkk_hr||0} kr/t</div>
+      </div>`;
+    }).join('');
+
+    const weatherInfo = d.weather || {};
+    const wx = weatherInfo.is_heavy_rain ? '🌧 Kraftig regn (+bonus)' :
+               weatherInfo.is_raining    ? '🌦 Let regn' :
+               weatherInfo.is_cold       ? '🥶 Frost' : '☀️ Tørt vejr';
+    const wxScore = weatherInfo.score != null ? ` · Vejr-score: ${weatherInfo.score}/100` : '';
+
+    document.getElementById('ai-rec-content').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start">
+        <div class="ai-rec-card">
+          <div style="font-size:.65rem;color:#4a5568;letter-spacing:.1em">ANBEFALET ZONE</div>
+          <div class="ai-rec-zone">${d.recommended_zone || '–'}</div>
+          <div class="ai-rec-score-bar"><div class="ai-rec-score-fill" style="width:${score}%;background:${col}"></div></div>
+          <div style="font-size:.85rem;color:${col};font-weight:700">${grade} · ${score}/100</div>
+          <div style="font-size:.8rem;color:#94a3b8;line-height:1.5;margin-top:4px">${d.reason || '–'}</div>
+          <div class="ai-rec-meta">
+            <span>${wx}${wxScore}</span>
+            <span>📅 ${d.events_today || 0} events i dag</span>
+            <span>💰 ~${d.earn_dkk_per_hour || 0} kr/time</span>
+          </div>
+          <div class="ai-rec-updated">Opdateret: ${ts} · Pipeline v2.0 LangGraph${cached}</div>
+        </div>
+        <div style="min-width:220px">
+          <div style="font-size:.65rem;color:#4a5568;letter-spacing:.1em;margin-bottom:8px">TOP 5 ZONER</div>
+          ${topZonesHtml || '<div style="color:#4a5568;font-size:.8rem">Ingen data</div>'}
+        </div>
+      </div>`;
+
+  } catch(e) {
+    document.getElementById('ai-rec-badge').textContent = 'Fejl';
+    document.getElementById('ai-rec-content').innerHTML =
+      `<div style="color:#ef4444;font-size:.8rem">⚠ LangGraph pipeline ikke tilgængelig – ${e.message}</div>`;
+  }
+}
+
+// ── EVENT SOURCES ─────────────────────────────────────────────────────────
+async function loadEventSources() {
+  const grid  = document.getElementById('evt-src-grid');
+  const badge = document.getElementById('evt-src-badge');
+  if (!grid) return;
+
+  try {
+    const resp = await fetch('/ai/events/sources');
+    const d    = await resp.json();
+    const sources = d.sources || [];
+
+    badge.textContent = `${sources.filter(s => s.status === 'ok').length}/${sources.length} aktive`;
+
+    grid.innerHTML = sources.map(s => {
+      const isOk    = s.status === 'ok';
+      const isNoKey = s.status === 'no_key';
+      const isMiss  = s.status === 'missing' || s.status === 'not_loaded';
+
+      const dotColor = isOk ? '#34d399' : isNoKey ? '#f59e0b' : '#f87171';
+      const bg       = isOk ? '#0a1a0a' : isNoKey ? '#1a1500' : '#1a0a0a';
+      const border   = isOk ? '#16a34a' : isNoKey ? '#d97706' : '#dc2626';
+
+      const countLine = s.event_count != null
+        ? `<div style="font-size:.7rem;color:#6b7280;margin-top:2px">${s.event_count} events i cache</div>`
+        : '';
+      const lastLine = s.last_update
+        ? `<div style="font-size:.65rem;color:#4a5568;margin-top:2px">Opdateret: ${new Date(s.last_update).toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'})}</div>`
+        : '';
+      const roleBadge = `<span style="font-size:.6rem;padding:1px 6px;border-radius:50px;background:#0a1628;color:#60a5fa;border:1px solid #1e3a5f">${s.role || ''}</span>`;
+
+      return `
+        <div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <div style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0"></div>
+            <div style="font-weight:700;font-size:.82rem;flex:1">${s.name}</div>
+            ${roleBadge}
+          </div>
+          ${countLine}
+          ${lastLine}
+          <div style="font-size:.65rem;color:#4a5568;margin-top:4px">${s.note || ''}</div>
+        </div>`;
+    }).join('');
+
+  } catch (e) {
+    badge.textContent = 'Fejl';
+    grid.innerHTML = `<div style="color:#f87171;font-size:.8rem">Kunne ikke hente event-kilder: ${e.message}</div>`;
+  }
+}
+
+// ── HOTSPOTS ──────────────────────────────────────────────────────────────
+async function loadHotspots() {
+  try {
+    // Prøv ny LangGraph endpoint først, fallback til gammel
+    let zones = [], events = [], weather = {}, analysis = null, ops = null;
+    try {
+      const [hsR, recR] = await Promise.all([
+        fetch(`${API}/ai/hotspots?city=Horsens&limit=6`),
+        fetch(`${API}/ai/recommendation?city=Horsens`)
+      ]);
+      if (hsR.ok && recR.ok) {
+        const hs  = await hsR.json();
+        const rec = await recR.json();
+        zones   = (hs.hotspots || []).map(z => ({
+          name: z.zone, score: z.score, earn_dkk_hr: z.earn_dkk_per_hour,
+          reasons: z.reasons || [], is_hotspot: z.score >= 70
+        }));
+        events  = rec.weather ? [] : [];
+        weather = rec.weather || {};
+        // Render with AI data
+        document.getElementById('hotspot-badge').textContent =
+          zones.filter(z => z.score >= 70).length + ' hotspots · AI';
+        document.getElementById('hotspot-grid').innerHTML = zones.length
+          ? zones.map(z => {
+              const col = z.score>=85?'#ef4444':z.score>=70?'#f59e0b':z.score>=50?'#3b82f6':'#4a5568';
+              const label = z.score>=85?'🔥 MEGET HØJ':z.score>=70?'⚡ HØJ':z.score>=50?'📈 MIDDEL':'📊 LAV';
+              const reasons = (z.reasons||[]).slice(0,2).join(' · ')||'Stabil efterspørgsel';
+              const earn = z.earn_dkk_hr||0;
+              const precip = weather.precipitation||0;
+              const wxL = precip>=3?'🌧 Kraftig regn':precip>=0.5?'🌦 Let regn':'☀️ Tørt vejr';
+              return `<div style="background:#080c14;border:1.5px solid ${col}33;border-left:3px solid ${col};border-radius:12px;padding:14px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <div style="font-weight:800;font-size:.9rem">${z.name}</div>
+                  <div style="font-size:1.2rem;font-weight:900;color:${col}">${z.score}</div>
+                </div>
+                <div style="font-size:.7rem;color:${col};font-weight:700;margin-bottom:6px">${label}</div>
+                <div style="font-size:.78rem;color:#64748b;line-height:1.4;margin-bottom:8px">${reasons}</div>
+                <div style="font-size:.75rem;color:#22c55e;font-weight:700">~${earn} kr/time</div>
+                <div style="font-size:.7rem;color:#4a5568;margin-top:4px">${wxL}</div>
+              </div>`;
+            }).join('')
+          : '<div style="color:#4a5568;font-size:.8rem">Ingen hotspots pt.</div>';
+        // Fetch events from old endpoint for event radar + revenue
+        const oldR = await fetch(`${API}/api/analyze?city=Horsens`, {credentials:'include'});
+        if (oldR.ok) {
+          const old = await oldR.json();
+          renderEventRadar(old.data?.events || []);
+          renderRevenue(old.analysis, old.ops, old.data?.weather || {});
+          renderPrivateDemand(zones, old.data?.events || [], old.data?.weather || {});
+        }
+        return;
+      }
+    } catch(_) {}
+    // Fallback: gammel endpoint
+    const r = await fetch(`${API}/api/analyze?city=Horsens`, {credentials:'include'});
+    if (!r.ok) return;
+    const d = await r.json();
+    zones   = d.analysis?.top_zones || d.analysis?.scored_zones || [];
+    events  = d.data?.events || [];
+    weather = d.data?.weather || {};
+
+    document.getElementById('hotspot-badge').textContent = zones.filter(z => z.score >= 70).length + ' hotspots';
+
+    if (!zones.length) {
+      document.getElementById('hotspot-grid').innerHTML = '<div style="color:#4a5568;font-size:.8rem">Ingen data – kør agenter</div>';
+      return;
+    }
+
+    const precip = weather.precipitation || 0;
+    const wxLabel = precip >= 3 ? '🌧 Kraftig regn' : precip >= 0.5 ? '🌦 Let regn' : '☀️ Tørt vejr';
+
+    document.getElementById('hotspot-grid').innerHTML = zones.slice(0, 6).map(z => {
+      const col = z.score >= 85 ? '#ef4444' : z.score >= 70 ? '#f59e0b' : z.score >= 50 ? '#3b82f6' : '#4a5568';
+      const label = z.score >= 85 ? '🔥 MEGET HØJ' : z.score >= 70 ? '⚡ HØJ' : z.score >= 50 ? '📈 MIDDEL' : '📊 LAV';
+      const reasons = (z.reasons || []).slice(0, 2).join(' · ') || 'Stabil efterspørgsel';
+      const earn = z.earn_dkk_hr || 0;
+      return `<div style="background:#080c14;border:1.5px solid ${col}33;border-left:3px solid ${col};border-radius:12px;padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-weight:800;font-size:.9rem">${z.name}</div>
+          <div style="font-size:1.2rem;font-weight:900;color:${col}">${z.score}</div>
+        </div>
+        <div style="font-size:.7rem;color:${col};font-weight:700;margin-bottom:6px">${label}</div>
+        <div style="font-size:.78rem;color:#64748b;line-height:1.4;margin-bottom:8px">${reasons}</div>
+        <div style="font-size:.75rem;color:#22c55e;font-weight:700">~${earn} kr/time</div>
+        <div style="font-size:.7rem;color:#4a5568;margin-top:4px">${wxLabel}</div>
+      </div>`;
+    }).join('');
+
+    // Opdater også event radar og revenue
+    renderEventRadar(events);
+    renderRevenue(d.analysis, d.ops, weather);
+    renderPrivateDemand(zones, events, weather);
+
+  } catch(e) {
+    document.getElementById('hotspot-grid').innerHTML = '<div style="color:#ef4444;font-size:.8rem">Fejl – kør agenter først</div>';
+  }
+}
+
+// ── EVENT RADAR ───────────────────────────────────────────────────────────
+function renderEventRadar(events) {
+  const today = new Date().toISOString().slice(0,10);
+  const relevant = events.filter(e => !e.date || e.date >= today).slice(0, 8);
+  document.getElementById('event-badge').textContent = relevant.length + ' events';
+
+  if (!relevant.length) {
+    document.getElementById('event-list').innerHTML = '<div style="color:#4a5568;font-size:.8rem">Ingen kommende events fundet</div>';
+    return;
+  }
+
+  const now = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+
+  document.getElementById('event-list').innerHTML = relevant.map(ev => {
+    const [h,m] = (ev.time||'20:00').split(':').map(Number);
+    const evMin = h*60+m;
+    const diffMin = evMin - nowMin;
+    const timing = diffMin < 0 ? 'Foregår nu' : diffMin < 60 ? `Om ${diffMin} min` : diffMin < 120 ? `Om ${Math.round(diffMin/60*10)/10} time` : `Kl. ${ev.time||'?'}`;
+    const att = ev.attendance || 0;
+    const potential = att >= 5000 ? '🔥 Meget højt' : att >= 2000 ? '⚡ Højt' : att >= 500 ? '📈 Middel' : '📊 Lavt';
+    const potColor = att >= 5000 ? '#ef4444' : att >= 2000 ? '#f59e0b' : att >= 500 ? '#3b82f6' : '#4a5568';
+    const readyTime = `${Math.max(0,h-1).toString().padStart(2,'0')}:${(m||0).toString().padStart(2,'0')}`;
+
+    return `<div style="background:#080c14;border:1px solid #1e2d45;border-radius:10px;padding:12px;display:flex;gap:14px;align-items:center">
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:.88rem;margin-bottom:3px">${ev.name}</div>
+        <div style="font-size:.78rem;color:#64748b">${ev.venue||ev.city||''} · ${ev.date||'I dag'}</div>
+        <div style="font-size:.75rem;color:#3b82f6;margin-top:4px">⏱ Vær klar kl. ${readyTime} · ${att ? att.toLocaleString('da-DK')+' gæster' : ''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:.8rem;font-weight:800;color:${potColor}">${potential}</div>
+        <div style="font-size:.72rem;color:#4a5568;margin-top:3px">${timing}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── REVENUE OPPORTUNITY ───────────────────────────────────────────────────
+function renderRevenue(analysis, ops, weather) {
+  const topZones = analysis?.top_zones || [];
+  const earnings = ops?.earnings || {};
+  const top = topZones[0] || {};
+
+  const daily = earnings.daily_est_dkk || 0;
+  const monthly = earnings.monthly_est_dkk || 0;
+  const target = 85000;
+  const gap = Math.max(0, target - monthly);
+  const pct = Math.min(100, Math.round(monthly / target * 100));
+  const rainBonus = weather?.is_raining ? Math.round(daily * 0.2) : 0;
+
+  const actions = [];
+  if (topZones[0]?.score >= 70) actions.push(`🔥 Kør til ${topZones[0].name} nu – score ${topZones[0].score}/100`);
+  if (rainBonus > 0) actions.push(`🌧 Regnbonus aktiv – estimeret +${rainBonus} kr/dag ekstra`);
+  if (topZones.length >= 2) actions.push(`📍 Næstbedste: ${topZones[1].name} (score ${topZones[1].score})`);
+  if (gap > 0) actions.push(`⚠️ ${gap.toLocaleString('da-DK')} kr fra mål – kontakt flere B2B kunder`);
+  actions.push(`📞 Send tilbud til hoteller og hospital denne uge`);
+
+  document.getElementById('rev-badge').textContent = monthly ? `~${(monthly/1000).toFixed(0)}k kr/md` : '–';
+
+  document.getElementById('revenue-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px">
+      <div style="background:#080c14;border:1px solid #1e2d45;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:.65rem;color:#4a5568;letter-spacing:.1em;margin-bottom:4px">EST. I DAG</div>
+        <div style="font-size:1.4rem;font-weight:900;color:#22c55e">${daily ? daily.toLocaleString('da-DK')+' kr' : '–'}</div>
+      </div>
+      <div style="background:#080c14;border:1px solid #1e2d45;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:.65rem;color:#4a5568;letter-spacing:.1em;margin-bottom:4px">EST. MÅNED</div>
+        <div style="font-size:1.4rem;font-weight:900;color:#3b82f6">${monthly ? (monthly/1000).toFixed(0)+'k kr' : '–'}</div>
+      </div>
+      <div style="background:#080c14;border:1px solid #1e2d45;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:.65rem;color:#4a5568;letter-spacing:.1em;margin-bottom:4px">MÅL: 85K/MD</div>
+        <div style="font-size:1.4rem;font-weight:900;color:${pct>=80?'#22c55e':'#f59e0b'}">${pct}%</div>
+      </div>
+    </div>
+    <div style="background:#080c14;border:1px solid #1e3a5f;border-radius:10px;padding:14px">
+      <div style="font-size:.75rem;color:#3b82f6;font-weight:700;margin-bottom:10px">TOP 5 HANDLINGER I DAG</div>
+      ${actions.map((a,i) => `<div style="font-size:.85rem;padding:6px 0;border-bottom:1px solid #1e2d45;${i===actions.length-1?'border:none':''}">${a}</div>`).join('')}
+    </div>`;
+}
+
+// ── PRIVAT KØRSEL DEMAND ──────────────────────────────────────────────────
+function renderPrivateDemand(zones, events, weather) {
+  const hour = new Date().getHours();
+  const isWeekend = [5,6].includes(new Date().getDay());
+  const isRaining = (weather?.precipitation||0) >= 0.5;
+
+  const segments = [
+    {
+      icon:'🏥', label:'Sygehus & Klinikker',
+      score: 60 + (hour>=7&&hour<=9?25:0) + (hour>=14&&hour<=16?20:0),
+      why:'Patienter til/fra undersøgelser – særligt morgen og eftermiddag',
+      tip:'Kør Sundvej 30 og Horsens Sygehus'
+    },
+    {
+      icon:'🏨', label:'Hoteller',
+      score: 50 + (hour>=6&&hour<=9?20:0) + (hour>=17&&hour<=20?15:0),
+      why:'Forretningsrejsende og fly-forbindelser',
+      tip:'Scandic Bygholm + Hotel Opus – kontakt receptionen'
+    },
+    {
+      icon:'🎓', label:'VIA & Gymnasier',
+      score: 45 + (hour>=7&&hour<=9?20:0) + (hour>=14&&hour<=16?20:0) + (isRaining?15:0),
+      why:'Studerende der undgår cykel i dårligt vejr',
+      tip:`${isRaining?'Regn = ekstra efterspørgsel nu':'Mest aktiv morgen og eftermiddag'}`
+    },
+    {
+      icon:'🌙', label:'Natteliv & Restauranter',
+      score: (hour>=21||hour<=2?80:35) + (isWeekend?20:0),
+      why:'Centrum og havneområdet – fredag/lørdag aften',
+      tip:'Positionér ved Søndergade og Havnen kl. 22-02'
+    },
+    {
+      icon:'🏘️', label:'Boligområder u. god bus',
+      score: 50 + (isRaining?20:0) + ((hour>=7&&hour<=9)||(hour>=16&&hour<=18)?15:0),
+      why:'Hatting, Stensballe, Nim – dårlig busdækning',
+      tip:`${isRaining?'Regn = mange bestillinger':'Morgen- og aftenpendling'}`
+    },
+    {
+      icon:'🎪', label:'Events & Arrangementer',
+      score: events.length > 0 ? 70 + Math.min(20, events.length * 5) : 30,
+      why: events.length > 0 ? `${events.length} events i dag – publikum skal hjem` : 'Ingen events i dag',
+      tip: events.length > 0 ? `Vær klar ved ${events[0]?.venue||'event-stedet'} ved afslutning` : 'Tjek event-radar for kommende muligheder'
+    },
+  ].sort((a,b) => b.score - a.score);
+
+  document.getElementById('private-badge').textContent = segments.filter(s => s.score >= 65).length + ' aktive segmenter';
+
+  document.getElementById('private-list').innerHTML = segments.map(s => {
+    const col = s.score >= 75 ? '#22c55e' : s.score >= 55 ? '#f59e0b' : '#4a5568';
+    return `<div style="background:#080c14;border:1px solid #1e2d45;border-left:3px solid ${col};border-radius:10px;padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-weight:800;font-size:.88rem">${s.icon} ${s.label}</div>
+        <div style="font-size:1rem;font-weight:900;color:${col}">${s.score}</div>
+      </div>
+      <div style="font-size:.78rem;color:#64748b;margin-bottom:6px">${s.why}</div>
+      <div style="font-size:.75rem;color:${col};font-weight:600">${s.tip}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+(async () => {
+  await checkAuth();
+  loadAgents();
+  loadLeads();
+  loadAIRecommendation();   // LangGraph pipeline
+  loadHotspots();
+  loadEventSources();       // Billetto + event source status
+  setInterval(loadAgents, 5000);
+  setInterval(loadAIRecommendation, 5 * 60 * 1000);   // refresh AI hvert 5. min
+  setInterval(loadHotspots, 10 * 60 * 1000);          // refresh hotspots hvert 10. min
+  setInterval(loadEventSources, 15 * 60 * 1000);      // refresh event sources hvert 15. min
+})();
+</script>
+</body>
+</html>

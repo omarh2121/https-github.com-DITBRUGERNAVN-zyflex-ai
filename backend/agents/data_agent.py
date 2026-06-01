@@ -373,23 +373,66 @@ class DataAgent:
 
     # ── Lokationer (POI) ─────────────────────────────────────────────────────
 
+    # POI-cache: gemmes til disk i 24 timer. Overpass-data ændrer sig ikke hurtigt.
+    _POI_CACHE_FILE = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "data", "poi_cache.json"
+    )
+    _POI_CACHE_TTL_HOURS = 24
+
     def _fetch_locations(self, zones: list) -> dict:
+        # ── Forsøg at læse fra disk-cache ──────────────────────────────────
+        cached = self._load_poi_cache()
+        if cached:
+            logger.info("[DataAgent] POI data hentet fra cache (< 24t gammel)")
+            return cached
+
+        # ── Hent fra Overpass med 2s timeout ───────────────────────────────
         results = {}
         for zone in zones:
             try:
                 q = f"""
-                [out:json][timeout:8];
+                [out:json][timeout:4];
                 (node["tourism"="hotel"](around:800,{zone['lat']},{zone['lon']});
                  node["amenity"~"bar|pub|restaurant|hospital"](around:800,{zone['lat']},{zone['lon']});
                  node["railway"="station"](around:800,{zone['lat']},{zone['lon']}););
                 out count;
                 """
-                r = requests.post(OVERPASS_URL, data={"data": q}, timeout=12)
+                r = requests.post(OVERPASS_URL, data={"data": q}, timeout=2)
+                r.raise_for_status()
                 total = int(r.json().get("elements", [{}])[0].get("tags", {}).get("total", 0))
                 results[zone["id"]] = self._default_pois(zone["poi_type"], total)
             except Exception:
                 results[zone["id"]] = self._default_pois(zone["poi_type"])
+
+        # ── Gem til cache hvis vi fik noget ───────────────────────────────
+        if results:
+            self._save_poi_cache(results)
+
         return results
+
+    def _load_poi_cache(self) -> dict:
+        """Læs POI-cache fra disk. Returnér None hvis gammel eller mangler."""
+        try:
+            if not os.path.exists(self._POI_CACHE_FILE):
+                return None
+            mtime = os.path.getmtime(self._POI_CACHE_FILE)
+            age_hours = (datetime.now().timestamp() - mtime) / 3600
+            if age_hours > self._POI_CACHE_TTL_HOURS:
+                return None
+            with open(self._POI_CACHE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return None
+
+    def _save_poi_cache(self, data: dict):
+        """Gem POI-data til disk-cache."""
+        try:
+            os.makedirs(os.path.dirname(self._POI_CACHE_FILE), exist_ok=True)
+            with open(self._POI_CACHE_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False)
+        except Exception as e:
+            logger.warning(f"[DataAgent] POI-cache kunne ikke gemmes: {e}")
 
     def _default_pois(self, poi_type: str, total: int = 0) -> dict:
         defaults = {

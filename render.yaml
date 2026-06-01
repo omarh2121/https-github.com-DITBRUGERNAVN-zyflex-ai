@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: zyflex-ai
+    name: zyflex-demand-radar
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
@@ -8,5 +8,5 @@ services:
     envVars:
       - key: PYTHONIOENCODING
         value: utf-8
-      - key: TICKETMASTER_API_KEY
-        value: ""
+      - key: PORT
+        value: 10000

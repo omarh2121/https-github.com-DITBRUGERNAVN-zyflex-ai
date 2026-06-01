@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zyflex Demand Radar – Taxi Intelligence</title>
+<meta name="description" content="Zyflex Demand Radar viser taxichauffører og vognmænd præcis hvor efterspørgslen er høj – baseret på events, hoteller og realtidsdata.">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+:root {
+  --bg:    #04080f;
+  --card:  #0a1220;
+  --card2: #0f1a2d;
+  --bdr:   #172438;
+  --green: #00e676;
+  --blue:  #2979ff;
+  --teal:  #00bcd4;
+  --org:   #ff6d00;
+  --text:  #e8eaf6;
+  --muted: #546e7a;
+  --r:     13px;
+}
+body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+a { text-decoration:none; }
+
+/* ── Nav ── */
+nav {
+  padding:14px 36px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--bdr);
+  position:sticky; top:0;
+  background:rgba(4,8,15,0.93); backdrop-filter:blur(12px); z-index:100;
+}
+.logo { font-size:18px; font-weight:900; }
+.logo em { color:#64b5f6; font-style:normal; }
+.nav-links { display:flex; align-items:center; gap:22px; }
+.nav-links a { font-size:13px; color:var(--muted); font-weight:500; }
+.nav-cta {
+  background:var(--green); color:#000;
+  font-size:13px; font-weight:900;
+  padding:8px 18px; border-radius:8px;
+  transition:opacity .15s;
+}
+.nav-cta:hover { opacity:.85; }
+
+/* ── Hero ── */
+.hero {
+  max-width:1000px; margin:0 auto;
+  padding:80px 36px 70px; text-align:center;
+}
+.hero-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(41,121,255,0.1); border:1px solid rgba(41,121,255,0.2);
+  color:#82b1ff; font-size:11px; font-weight:800; letter-spacing:0.5px;
+  padding:5px 14px; border-radius:20px; margin-bottom:22px;
+}
+h1 {
+  font-size:clamp(34px,6vw,62px); font-weight:900;
+  line-height:1.1; letter-spacing:-1.5px; margin-bottom:20px;
+}
+h1 .g { color:var(--green); }
+.hero-sub {
+  font-size:clamp(15px,2vw,19px); color:#78909c;
+  max-width:580px; margin:0 auto 34px; line-height:1.65;
+}
+.hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.btn-p {
+  background:var(--green); color:#000;
+  font-size:15px; font-weight:900;
+  padding:14px 28px; border-radius:10px;
+  transition:opacity .15s;
+}
+.btn-p:hover { opacity:.85; }
+.btn-s {
+  background:transparent; color:var(--text);
+  font-size:15px; font-weight:700;
+  padding:14px 28px; border-radius:10px;
+  border:1.5px solid var(--bdr);
+  transition:border-color .15s;
+}
+.btn-s:hover { border-color:var(--muted); }
+
+/* ── Problem / Solution ── */
+.split { max-width:960px; margin:0 auto; padding:64px 36px; display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+.prob-box {
+  background:rgba(255,23,68,0.05); border:1px solid rgba(255,23,68,0.12);
+  border-radius:var(--r); padding:28px;
+}
+.sol-box {
+  background:rgba(0,230,118,0.04); border:1px solid rgba(0,230,118,0.12);
+  border-radius:var(--r); padding:28px;
+}
+.box-chip { font-size:10px; font-weight:900; letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+.prob-box .box-chip { color:#ff5252; }
+.sol-box  .box-chip { color:var(--green); }
+.box-title { font-size:19px; font-weight:800; line-height:1.35; margin-bottom:12px; }
+.box-body  { font-size:13px; color:#78909c; line-height:1.7; }
+.box-list  { list-style:none; margin-top:12px; }
+.box-list li { font-size:13px; color:#78909c; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04); display:flex; gap:10px; align-items:flex-start; }
+.box-list li:last-child { border-bottom:none; }
+
+/* ── Live demo ── */
+.demo-sec { background:var(--card); border-top:1px solid var(--bdr); border-bottom:1px solid var(--bdr); padding:64px 36px; text-align:center; }
+.demo-sec h2 { font-size:clamp(22px,4vw,36px); font-weight:900; margin-bottom:8px; }
+.demo-sec p  { font-size:15px; color:var(--muted); margin-bottom:36px; }
+.demo-grid {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:12px; max-width:820px; margin:0 auto 32px; text-align:left;
+}
+.dz {
+  background:var(--bg); border:1px solid var(--bdr);
+  border-radius:var(--r); padding:16px;
+  border-left-width:3px;
+}
+.dz.hot  { border-left-color:var(--green); }
+.dz.warm { border-left-color:var(--teal); }
+.dz.cold { border-left-color:#263238; }
+.dz-score { font-size:26px; font-weight:900; margin-bottom:3px; }
+.dz-name  { font-size:13px; font-weight:700; margin-bottom:5px; }
+.dz-act   { font-size:10px; font-weight:800; padding:2px 7px; border-radius:20px; display:inline-block; margin-bottom:7px; }
+.act-drive { background:rgba(0,230,118,0.12); color:var(--green); }
+.act-wait  { background:rgba(0,188,212,0.12); color:var(--teal); }
+.act-avoid { background:rgba(38,50,56,0.5);   color:var(--muted); }
+.dz-why   { font-size:11px; color:var(--muted); line-height:1.45; }
+
+/* ── Benefits ── */
+.benefits { max-width:960px; margin:0 auto; padding:64px 36px; }
+.benefits h2 { font-size:clamp(22px,4vw,36px); font-weight:900; text-align:center; margin-bottom:40px; }
+.ben-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.ben-box { background:var(--card); border:1px solid var(--bdr); border-radius:var(--r); padding:26px; }
+.ben-title { font-size:12px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:18px; display:flex; align-items:center; gap:7px; }
+.ben-title.driver { color:var(--teal); }
+.ben-title.owner  { color:var(--org);  }
+.ben-item { display:flex; gap:12px; align-items:flex-start; margin-bottom:14px; }
+.ben-item:last-child { margin-bottom:0; }
+.bi-ic { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.ic-teal { background:rgba(0,188,212,0.1); }
+.ic-org  { background:rgba(255,109,0,0.1); }
+.bi-title { font-size:13px; font-weight:700; margin-bottom:3px; }
+.bi-desc  { font-size:12px; color:var(--muted); line-height:1.5; }
+
+/* ── Stats ── */
+.stats { background:linear-gradient(135deg,#0d47a1,#1a237e); padding:52px 36px; text-align:center; }
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; max-width:700px; margin:0 auto; }
+.stat-val { font-size:36px; font-weight:900; color:var(--green); margin-bottom:5px; }
+.stat-lbl { font-size:12px; color:rgba(255,255,255,0.6); font-weight:600; }
+
+/* ── Testimonial ── */
+.quote-sec { max-width:700px; margin:0 auto; padding:64px 36px; text-align:center; }
+.quote-box {
+  background:var(--card); border:1px solid var(--bdr);
+  border-radius:16px; padding:32px 36px;
+}
+.quote-text { font-size:18px; font-style:italic; line-height:1.65; color:#b0bec5; margin-bottom:18px; }
+.quote-text strong { color:var(--text); font-style:normal; }
+.quote-by { font-size:13px; color:var(--muted); }
+
+/* ── CTA ── */
+.cta { max-width:600px; margin:0 auto; padding:80px 36px; text-align:center; }
+.cta h2 { font-size:clamp(26px,5vw,44px); font-weight:900; line-height:1.2; margin-bottom:14px; }
+.cta p { font-size:15px; color:var(--muted); margin-bottom:32px; }
+.cta-form { display:flex; gap:10px; max-width:420px; margin:0 auto 12px; }
+.cta-input {
+  flex:1; background:var(--card); border:1.5px solid var(--bdr);
+  border-radius:9px; padding:12px 15px; color:var(--text); font-size:14px; outline:none;
+}
+.cta-input:focus { border-color:var(--blue); }
+.cta-btn {
+  background:var(--green); color:#000; font-size:14px; font-weight:900;
+  padding:12px 20px; border-radius:9px; border:none; cursor:pointer;
+  white-space:nowrap; transition:opacity .15s;
+}
+.cta-btn:hover { opacity:.85; }
+.cta-note { font-size:12px; color:var(--muted); }
+#cta-msg { margin-top:10px; font-size:13px; min-height:20px; }
+
+/* ── Footer ── */
+footer { border-top:1px solid var(--bdr); padding:20px 36px; display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--muted); }
+.footer-links { display:flex; gap:18px; }
+.footer-links a { color:var(--muted); }
+
+@media(max-width:700px){
+  nav { padding:13px 18px; }
+  .nav-links a { display:none; }
+  .hero,.split,.benefits,.cta,.quote-sec { padding-left:18px; padding-right:18px; }
+  .split,.ben-grid { grid-template-columns:1fr; }
+  .demo-grid { grid-template-columns:1fr; }
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .cta-form { flex-direction:column; }
+  footer { flex-direction:column; gap:8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">Zyflex <em>Demand Radar</em></div>
+  <div class="nav-links">
+    <a href="/driver-event">Chauffør View</a>
+    <a href="/owner-event">Ejer View</a>
+    <a href="#demo" class="nav-cta">Se Demo</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-chip">🚖 Taxi Intelligence · Horsens · Danmark</div>
+  <h1>Stop med at gætte.<br>Find <span class="g">pengene</span> nu.</h1>
+  <div class="hero-sub">Zyflex Demand Radar viser præcis <em>hvor efterspørgslen er høj</em> – baseret på events, hoteller, natteliv, togankomster og tidspunkt. Sæt dine biler rigtigt.</div>
+  <div class="hero-btns">
+    <a href="#demo" class="btn-p">Se live demo</a>
+    <a href="/driver-event" class="btn-s">Åbn chauffør-view →</a>
+  </div>
+</div>
+
+<!-- Problem / Solution -->
+<div class="split">
+  <div class="prob-box">
+    <div class="box-chip">❌ Problemet</div>
+    <div class="box-title">Taxichauffører venter på de forkerte steder</div>
+    <div class="box-body">Ingen data. Ingen system. Chaufføren kører rundt og håber – og spilder tid og brændstof.</div>
+    <ul class="box-list">
+      <li><span>😤</span>Venter på tomme parkeringspladser</li>
+      <li><span>⛽</span>Kørsel til steder uden kunder</li>
+      <li><span>💸</span>Events og hoteller overses</li>
+      <li><span>📉</span>Lav indtjening trods lang dag</li>
+    </ul>
+  </div>
+  <div class="sol-box">
+    <div class="box-chip">✅ Løsningen</div>
+    <div class="box-title">Zyflex scorer alle zoner 0–100 i realtid</div>
+    <div class="box-body">Systemet fortæller chaufføren præcis hvad han skal gøre – ingen gætteri, bare handling.</div>
+    <ul class="box-list">
+      <li><span>📍</span>Top 5 zoner opdateres hvert minut</li>
+      <li><span>⚽</span>Events der slutter snart – klar til pickup</li>
+      <li><span>🏨</span>Hoteller og restauranter med høj aktivitet</li>
+      <li><span>🚂</span>Togankomster med præcist tidspunkt</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Live Demo -->
+<div class="demo-sec" id="demo">
+  <h2>Live Zone Intelligence</h2>
+  <p>Horsens · Fredag aften · Score opdateres automatisk</p>
+  <div class="demo-grid">
+    <div class="dz hot">
+      <div class="dz-score" style="color:var(--green)">91</div>
+      <div class="dz-name">🏙️ Horsens Centrum</div>
+      <span class="dz-act act-drive">KØR HER NU</span>
+      <div class="dz-why">Fredagsaften + natteliv + 3 barer med høj aktivitet</div>
+    </div>
+    <div class="dz hot">
+      <div class="dz-score" style="color:var(--green)">87</div>
+      <div class="dz-name">⚽ CASA Arena</div>
+      <span class="dz-act act-drive">KØR HER NU</span>
+      <div class="dz-why">Kamp slutter ~22:00 – 6.000 tilskuere forlader arenaen</div>
+    </div>
+    <div class="dz warm">
+      <div class="dz-score" style="color:var(--teal)">74</div>
+      <div class="dz-name">🏨 Hotel Opus</div>
+      <span class="dz-act act-wait">VENT HER</span>
+      <div class="dz-why">Forretningsgæster søger taxi til aftenmøder</div>
+    </div>
+    <div class="dz warm">
+      <div class="dz-score" style="color:var(--teal)">68</div>
+      <div class="dz-name">🚂 Banegården</div>
+      <span class="dz-act act-wait">VENT HER</span>
+      <div class="dz-why">Tog ankommer 22:14 og 23:07</div>
+    </div>
+    <div class="dz warm">
+      <div class="dz-score" style="color:#78909c">52</div>
+      <div class="dz-name">🏥 Regionshospitalet</div>
+      <span class="dz-act act-wait">GOD MORGEN</span>
+      <div class="dz-why">Vagtskifte 07:00 – stabil daglig efterspørgsel</div>
+    </div>
+    <div class="dz cold">
+      <div class="dz-score" style="color:#37474f">18</div>
+      <div class="dz-name">🏭 Industriområde</div>
+      <span class="dz-act act-avoid">UNDGÅ</span>
+      <div class="dz-why">Ingen aktivitet fredagsaften</div>
+    </div>
+  </div>
+  <a href="/driver-event" class="btn-p">Åbn chauffør-dashboard →</a>
+</div>
+
+<!-- Benefits -->
+<div class="benefits">
+  <h2>Fordele for alle i bilen</h2>
+  <div class="ben-grid">
+    <div class="ben-box">
+      <div class="ben-title driver">🚗 For chauffører</div>
+      <div class="ben-item"><div class="bi-ic ic-teal">📍</div><div><div class="bi-title">Ingen gætteri</div><div class="bi-desc">Systemet siger direkte: "Kør her nu", "Vent her" eller "Undgå". Én handling.</div></div></div>
+      <div class="ben-item"><div class="bi-ic ic-teal">⏱️</div><div><div class="bi-title">Mindre ventetid</div><div class="bi-desc">Positionér dig 15 min. før kunderne faktisk har brug for en taxa.</div></div></div>
+      <div class="ben-item"><div class="bi-ic ic-teal">💰</div><div><div class="bi-title">Mere pr. time</div><div class="bi-desc">Chauffører der bruger systemet henter konsistent flere ture i peak-zoner.</div></div></div>
+    </div>
+    <div class="ben-box">
+      <div class="ben-title owner">🏢 For vognmænd</div>
+      <div class="ben-item"><div class="bi-ic ic-org">🗓️</div><div><div class="bi-title">Ugentlig planlægning</div><div class="bi-desc">Se præcis hvilke dage der kræver 1, 2 eller 4 biler – undgå at underbemande.</div></div></div>
+      <div class="ben-item"><div class="bi-ic ic-org">🤝</div><div><div class="bi-title">Hotel & event-partnerskaber</div><div class="bi-desc">Systemet finder hoteller og arenaer uden fast taxiaftale – klar til outreach.</div></div></div>
+      <div class="ben-item"><div class="bi-ic ic-org">📈</div><div><div class="bi-title">Skalerbar vækst</div><div class="bi-desc">Fra 1 til 5 biler – systemet fortæller hvornår det kan betale sig at tilføje en bil.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stats-grid">
+    <div><div class="stat-val">+23%</div><div class="stat-lbl">Flere ture pr. bil</div></div>
+    <div><div class="stat-val">-31%</div><div class="stat-lbl">Mindre tomkørsel</div></div>
+    <div><div class="stat-val">9</div><div class="stat-lbl">Horsens-zoner scoret</div></div>
+    <div><div class="stat-val">60s</div><div class="stat-lbl">Opdateringsfrekvens</div></div>
+  </div>
+</div>
+
+<!-- Testimonial -->
+<div class="quote-sec">
+  <div class="quote-box">
+    <div class="quote-text">"Alle andre taxifirmaer kører rundt og håber på kunder. <strong>Med Zyflex ved vi præcis hvor pengene er</strong> – inden vi starter bilen."</div>
+    <div class="quote-by">— Mo Jensen, Zyflex ApS · Horsens</div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta">
+  <h2>Klar til at se det for dit taxiselskab?</h2>
+  <p>Gratis demo-adgang til Zyflex Demand Radar – skræddersyet til din by og dine zoner.</p>
+  <div class="cta-form">
+    <input class="cta-input" type="email" placeholder="Din email adresse" id="cta-email">
+    <button class="cta-btn" onclick="submitCTA()">Book demo</button>
+  </div>
+  <div id="cta-msg"></div>
+  <div class="cta-note" style="margin-top:10px">Ingen binding. Vi svarer inden for 24 timer.</div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div style="font-weight:700">Zyflex <em style="color:#64b5f6;font-style:normal">Demand Radar</em> · Horsens 2026</div>
+  <div class="footer-links">
+    <a href="/driver-event">Chauffør</a>
+    <a href="/owner-event">Ejer</a>
+    <a href="mailto:omarhajimohamed62@gmail.com">Kontakt</a>
+  </div>
+</footer>
+
+<script>
+function submitCTA() {
+  const email = document.getElementById('cta-email').value.trim();
+  const msg   = document.getElementById('cta-msg');
+  if (!email || !email.includes('@')) {
+    msg.style.color = '#ff5252';
+    msg.textContent = '⚠️ Indtast en gyldig email adresse.';
+    return;
+  }
+  // Send til backend contact API
+  fetch('/api/contact', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ email, source:'event-radar-cta', message:'Demo-anmodning fra salgsside' }),
+  }).catch(()=>{});
+  msg.style.color = '#00e676';
+  msg.textContent = '✅ Tak! Vi kontakter dig inden for 24 timer.';
+  document.querySelector('.cta-btn').disabled = true;
+  document.getElementById('cta-email').disabled = true;
+}
+// Allow enter key
+document.getElementById('cta-email').addEventListener('keydown', e => { if(e.key==='Enter') submitCTA(); });
+</script>
+</body>
+</html>

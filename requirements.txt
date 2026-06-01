@@ -1,6 +1,28 @@
+# =============================================================================
+# Zyflex AI – Requirements
+# Opdateret: 2026-05-25 (LangGraph multi-agent integration)
+# =============================================================================
+
+# ── Core backend ──────────────────────────────────────────────────────────────
 fastapi>=0.104.0
 uvicorn>=0.24.0
 requests>=2.31.0
 pandas>=2.0.0
 python-dotenv>=1.0.0
 colorama>=0.4.6
+
+# ── LangGraph Multi-Agent System (NYT) ───────────────────────────────────────
+# Kerne: LangGraph + LangChain
+langgraph>=0.2.0
+langchain-core>=0.2.0
+
+# ── Uber H3 Hexagonal Zoning (NYT) ───────────────────────────────────────────
+# Bruges til hex-zone heatmap og demand prediction
+h3>=3.7.0
+
+# ── OpenAI (valgfrit – til fremtidige LLM-baserede agents) ───────────────────
+# TODO: Aktivér når LLM-routing tilføjes til DemandAgent
+# openai>=1.0.0
+
+# ── Deployment ────────────────────────────────────────────────────────────────
+# Render.com / Railway – ingen ekstra deps nødvendige

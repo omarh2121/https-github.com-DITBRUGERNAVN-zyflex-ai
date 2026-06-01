@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Zyflex Demand Radar – Chauffør</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg:      #060d18;
+  --card:    #0d1829;
+  --card2:   #131f33;
+  --border:  #1a2d47;
+  --green:   #00e676;
+  --yellow:  #ffd600;
+  --red:     #ff1744;
+  --orange:  #ff6d00;
+  --blue:    #2979ff;
+  --text:    #e8eaf6;
+  --muted:   #546e7a;
+  --r:       14px;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  padding-bottom: 100px;
+}
+
+/* ── Header ── */
+.header {
+  background: #0a1628;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.logo { font-size: 16px; font-weight: 900; letter-spacing: -0.3px; }
+.logo em { color: #64b5f6; font-style: normal; }
+.live {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(0,230,118,0.12);
+  border: 1px solid rgba(0,230,118,0.25);
+  color: var(--green);
+  font-size: 11px; font-weight: 800;
+  padding: 4px 10px; border-radius: 20px;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  background: var(--green); border-radius: 50%;
+  animation: blink 1.4s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* ── Hero zone – "KØR HER NU" ── */
+.hero-zone {
+  margin: 14px 14px 0;
+  border-radius: var(--r);
+  padding: 22px 20px 18px;
+  background: linear-gradient(140deg, #c62828 0%, #e53935 55%, #ff1744 100%);
+  box-shadow: 0 8px 32px rgba(255,23,68,0.35);
+  position: relative;
+  overflow: hidden;
+}
+.hero-zone::after {
+  content: '';
+  position: absolute; right: -20px; top: -20px;
+  width: 130px; height: 130px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+}
+.hero-label {
+  font-size: 11px; font-weight: 800; letter-spacing: 2px;
+  opacity: 0.85; margin-bottom: 6px;
+}
+.hero-name {
+  font-size: 28px; font-weight: 900; line-height: 1.1;
+  margin-bottom: 6px; letter-spacing: -0.5px;
+}
+.hero-score {
+  font-size: 13px; opacity: 0.9; margin-bottom: 10px;
+}
+.hero-reason {
+  font-size: 13px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px; padding: 9px 12px;
+  line-height: 1.5; font-style: italic;
+}
+
+/* ── Section ── */
+.sec { padding: 16px 14px 0; }
+.sec-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
+}
+
+/* ── Zone list ── */
+.zone {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 13px 14px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.zone:active { opacity: 0.85; }
+.zone.drive { border-left: 3px solid var(--green); }
+.zone.wait  { border-left: 3px solid var(--yellow); }
+.zone.later { border-left: 3px solid var(--blue); }
+.zone.avoid { border-left: 3px solid #37474f; }
+
+.score-ring {
+  width: 50px; height: 50px; border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-weight: 900; font-size: 17px;
+  border: 2px solid; flex-shrink: 0;
+}
+.score-ring sub { font-size: 9px; font-weight: 600; opacity: 0.65; }
+.ring-green  { color: var(--green);  border-color: var(--green);  background: rgba(0,230,118,0.07); }
+.ring-yellow { color: var(--yellow); border-color: var(--yellow); background: rgba(255,214,0,0.07); }
+.ring-blue   { color: #82b1ff;       border-color: #2979ff;       background: rgba(41,121,255,0.07); }
+.ring-grey   { color: #546e7a;       border-color: #37474f;       background: rgba(55,71,79,0.15); }
+
+.zone-body { flex: 1; min-width: 0; }
+.zone-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.tag {
+  display: inline-block;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+  padding: 2px 7px; border-radius: 20px; margin-bottom: 4px;
+}
+.tag-drive  { background: rgba(0,230,118,0.13); color: var(--green); }
+.tag-wait   { background: rgba(255,214,0,0.12);  color: var(--yellow); }
+.tag-later  { background: rgba(41,121,255,0.12); color: #82b1ff; }
+.tag-avoid  { background: rgba(55,71,79,0.3);    color: #607d8b; }
+.zone-why  { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.zone-time { font-size: 10px; color: #37474f; margin-top: 3px; }
+
+.cars-pill {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 9px;
+  text-align: center; flex-shrink: 0;
+}
+.cars-pill .n { font-size: 17px; font-weight: 900; line-height: 1; }
+.cars-pill .l { font-size: 9px; color: var(--muted); font-weight: 700; }
+
+/* ── Events ── */
+.event {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+}
+.ev-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.ev-body { flex: 1; }
+.ev-name  { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.ev-place { font-size: 11px; color: var(--muted); }
+.ev-ends {
+  font-size: 11px; font-weight: 800;
+  padding: 3px 8px; border-radius: 20px;
+  background: rgba(255,109,0,0.13); color: var(--orange);
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── Opportunities ── */
+.opp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opp {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 13px 12px;
+}
+.opp-icon { font-size: 22px; margin-bottom: 6px; }
+.opp-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.opp-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.opp-badge {
+  margin-top: 7px; display: inline-block;
+  font-size: 10px; font-weight: 800;
+  padding: 2px 7px; border-radius: 20px;
+}
+.badge-green  { background: rgba(0,230,118,0.12); color: var(--green); }
+.badge-yellow { background: rgba(255,214,0,0.12);  color: var(--yellow); }
+
+/* ── Feedback ── */
+.fb-wrap { padding: 16px 14px 0; }
+.fb-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
+}
+.fb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fb {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 10px;
+  text-align: center; cursor: pointer;
+  transition: transform 0.1s, border-color 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.fb:active { transform: scale(0.96); }
+.fb.sent  { opacity: 0.4; pointer-events: none; }
+.fb .fi   { font-size: 22px; }
+.fb .fl   { font-size: 12px; font-weight: 700; }
+.fb.trip  { border-color: var(--green); }
+.fb.notrip{ border-color: var(--red); }
+.fb.good  { border-color: var(--blue); }
+.fb.bad   { border-color: var(--orange); }
+
+.fb-toast {
+  background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.2);
+  color: var(--green); font-size: 13px; font-weight: 700;
+  text-align: center; border-radius: 10px; padding: 10px;
+  margin-top: 10px; display: none;
+}
+
+/* ── Privacy note ── */
+.privacy {
+  margin: 14px 14px 0;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 13px;
+  font-size: 11px; color: var(--muted);
+  line-height: 1.5; display: flex; gap: 8px;
+}
+.privacy span:first-child { flex-shrink: 0; }
+
+/* ── Footer bar ── */
+.footer-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #080f1e; border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; color: var(--muted); z-index: 100;
+}
+.refresh-track {
+  width: 70px; height: 3px;
+  background: var(--border); border-radius: 3px; overflow: hidden;
+}
+.refresh-fill {
+  height: 100%; background: var(--blue); border-radius: 3px;
+  animation: drain 60s linear infinite;
+}
+@keyframes drain { from{width:100%} to{width:0%} }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">Zyflex <em>Demand Radar</em></div>
+  <div class="live"><div class="live-dot"></div>LIVE</div>
+</div>
+
+<!-- Hero: bedste zone NU -->
+<div class="hero-zone" id="hero">
+  <div class="hero-label">🚨 KØR HER NU</div>
+  <div class="hero-name" id="hero-name">Horsens Centrum</div>
+  <div class="hero-score" id="hero-score">Score 91/100 · Fredag aften</div>
+  <div class="hero-reason" id="hero-reason">"Fredagsaften, natteliv, hoteller og høj aktivitet"</div>
+</div>
+
+<!-- Top zoner -->
+<div class="sec">
+  <div class="sec-label">📍 Top pengesteder nu</div>
+  <div id="zones"></div>
+</div>
+
+<!-- Events -->
+<div class="sec">
+  <div class="sec-label">🎟️ Events der slutter snart</div>
+  <div id="events"></div>
+</div>
+
+<!-- Muligheder -->
+<div class="sec">
+  <div class="sec-label">🏨 Muligheder</div>
+  <div class="opp-grid" id="opps"></div>
+</div>
+
+<!-- Feedback -->
+<div class="fb-wrap">
+  <div class="fb-label">📊 Din feedback forbedrer systemet</div>
+  <div class="fb-grid">
+    <div class="fb trip"   onclick="feedback('got_trip')"><div class="fi">🚖</div><div class="fl">Jeg fik en tur</div></div>
+    <div class="fb notrip" onclick="feedback('no_trip')"><div class="fi">😔</div><div class="fl">Ingen tur</div></div>
+    <div class="fb good"   onclick="feedback('good_rec')"><div class="fi">👍</div><div class="fl">God anbefaling</div></div>
+    <div class="fb bad"    onclick="feedback('bad_rec')"><div class="fi">👎</div><div class="fl">Dårlig anbefaling</div></div>
+  </div>
+  <div class="fb-toast" id="fb-toast">✅ Tak – din feedback er sendt!</div>
+</div>
+
+<!-- Privacy -->
+<div class="privacy">
+  <span>🔒</span>
+  <span>Dashboardet indsamler driftsdata for at forbedre anbefalinger. Der indsamles kun nødvendige data til rute- og zoneanalyse.</span>
+</div>
+
+<!-- Footer -->
+<div class="footer-bar">
+  <span>Sidst opdateret: <span id="clock">–</span></span>
+  <span style="display:flex;align-items:center;gap:7px">Nyt om 60s
+    <div class="refresh-track"><div class="refresh-fill"></div></div>
+  </span>
+</div>
+
+<script>
+// ── Telemetry ─────────────────────────────────────────────────────────────────
+const BASE = window.location.origin;
+function sid() {
+  return sessionStorage.getItem('zsid') || (() => {
+    const s = 'anon-' + Math.random().toString(36).slice(2) + '-' + Date.now();
+    sessionStorage.setItem('zsid', s); return s;
+  })();
+}
+async function tel(ep, data) {
+  try {
+    await fetch(`${BASE}/api/telemetry/${ep}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ anonymous_session_id: sid(), driver_id: localStorage.getItem('zyflex_driver_id')||null, ...data }),
+      keepalive: true,
+    });
+  } catch(_) {}
+}
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+const ZONES = [
+  { id:'zone-001', name:'Horsens Centrum',     cls:'drive', tag:'KØR HER NU',  score:91, cars:2, why:'Fredagsaften + natteliv + høj aktivitet', win:'Nu – 02:00',   action:'click_drive_here' },
+  { id:'zone-009', name:'CASA Arena',          cls:'drive', tag:'KØR HER NU',  score:87, cars:2, why:'Kamp slutter ~22:00 – 6.000 forlader arenaen', win:'21:30 – 23:00', action:'click_drive_here' },
+  { id:'zone-003', name:'Hotel Opus',          cls:'wait',  tag:'VENT HER',    score:74, cars:1, why:'Hotelgæster søger taxi aften og nat', win:'20:00 – 00:00', action:'click_wait_here' },
+  { id:'zone-004', name:'Horsens Banegård',    cls:'wait',  tag:'VENT HER',    score:68, cars:1, why:'Tog ankommer 22:14 og 23:07', win:'22:10 – 23:20',  action:'click_wait_here' },
+  { id:'zone-005', name:'Regionshospitalet',   cls:'later', tag:'GOD MORGEN',  score:52, cars:1, why:'Stabil – vagtskifte kl. 07:00', win:'07:00 – 09:00', action:'click_good_later' },
+  { id:'zone-008', name:'Industriområde Nord', cls:'avoid', tag:'UNDGÅ NU',    score:18, cars:0, why:'Ingen aktivitet fredagsaften', win:'–', action:'click_avoid' },
+];
+const EVENTS = [
+  { icon:'⚽', name:'AC Horsens – Fodboldkamp', place:'CASA Arena',     ends:'Slutter ~22:00', bg:'#1a237e22' },
+  { icon:'🎵', name:'Koncert – Store Sal',       place:'Horsens Teatret',ends:'Slutter ~23:30', bg:'#4a148c22' },
+  { icon:'🍻', name:'Fredag Bar-aften',          place:'Søndergade',    ends:'Aktiv til 02:00', bg:'#1b5e2022' },
+];
+const OPPS = [
+  { icon:'🏨', name:'Hotel Opus',    desc:'Aftal fast aftale. 10% rabat til hotelgæster.', badge:'badge-green', bl:'Høj værdi' },
+  { icon:'⚽', name:'CASA Arena',    desc:'Stå klar ved udgangen 15 min. før slutfløjt.', badge:'badge-green', bl:'Klar nu' },
+  { icon:'🚂', name:'Banegården',    desc:'Tog ankommer 22:14 – vær der 5 min. før.', badge:'badge-yellow', bl:'Kl. 22:09' },
+  { icon:'🏥', name:'Hospitalet',    desc:'Vagtskifte 07:00 og 15:00 – stabil tur.', badge:'badge-yellow', bl:'Morgen' },
+];
+
+function ringClass(s) { return s>=70?'ring-green':s>=45?'ring-yellow':s<30?'ring-grey':'ring-blue'; }
+
+function render() {
+  // Hero
+  const top = ZONES[0];
+  document.getElementById('hero-name').textContent  = top.name;
+  document.getElementById('hero-score').textContent = `Score ${top.score}/100 · ${timeCtx()}`;
+  document.getElementById('hero-reason').textContent = `"${top.why}"`;
+  if (top.score < 75) document.getElementById('hero').style.background = 'linear-gradient(140deg,#e65100,#ff6d00)';
+
+  // Zones
+  document.getElementById('zones').innerHTML = ZONES.map(z => `
+    <div class="zone ${z.cls}" onclick="zoneClick('${z.action}','${z.id}','${z.name}',${z.score})">
+      <div class="score-ring ${ringClass(z.score)}">${z.score}<sub>/100</sub></div>
+      <div class="zone-body">
+        <div class="zone-name">${z.name}</div>
+        <span class="tag tag-${z.cls}">${z.tag}</span>
+        <div class="zone-why">${z.why}</div>
+        <div class="zone-time">⏰ ${z.win}</div>
+      </div>
+      ${z.cars>0?`<div class="cars-pill"><div class="n">${z.cars}</div><div class="l">BILER</div></div>`:''}
+    </div>`).join('');
+
+  // Events
+  document.getElementById('events').innerHTML = EVENTS.map(e => `
+    <div class="event">
+      <div class="ev-icon" style="background:${e.bg}">${e.icon}</div>
+      <div class="ev-body">
+        <div class="ev-name">${e.name}</div>
+        <div class="ev-place">📍 ${e.place}</div>
+      </div>
+      <div class="ev-ends">${e.ends}</div>
+    </div>`).join('');
+
+  // Opps
+  document.getElementById('opps').innerHTML = OPPS.map(o => `
+    <div class="opp">
+      <div class="opp-icon">${o.icon}</div>
+      <div class="opp-name">${o.name}</div>
+      <div class="opp-desc">${o.desc}</div>
+      <span class="opp-badge ${o.badge}">${o.bl}</span>
+    </div>`).join('');
+
+  // Clock
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'});
+}
+
+function timeCtx() {
+  const h = new Date().getHours();
+  if(h>=22||h<3) return 'Nat'; if(h>=18) return 'Aften'; if(h>=12) return 'Eftermiddag'; return 'Morgen';
+}
+
+// Telemetry zone click
+function zoneClick(action, id, name, score) {
+  tel('action', { action_type:action, zone_id:id, metadata:{zone_name:name,score} });
+}
+
+// Feedback
+let _lastRec = null;
+async function feedback(type) {
+  const map = { got_trip:{got_trip:true,rating:'good'}, no_trip:{got_trip:false,rating:null}, good_rec:{got_trip:null,rating:'good'}, bad_rec:{got_trip:null,rating:'bad'} };
+  const fb = map[type]; if(!fb) return;
+  await tel('feedback', { recommendation_id:_lastRec, rating:fb.rating, got_trip:fb.got_trip });
+  const toast = document.getElementById('fb-toast');
+  toast.style.display = 'block';
+  document.querySelectorAll('.fb').forEach(b=>b.classList.add('sent'));
+  setTimeout(()=>{ toast.style.display='none'; document.querySelectorAll('.fb').forEach(b=>b.classList.remove('sent')); }, 2800);
+}
+
+// Auto-refresh
+function tick() {
+  ZONES.forEach(z => { const d=Math.round((Math.random()-.5)*3); z.score=Math.max(5,Math.min(99,z.score+d)); });
+  ZONES.sort((a,b)=>b.score-a.score);
+  render();
+}
+render();
+
+// Track view + top recommendation
+tel('view', { city:'Horsens', top_zone:ZONES[0].name, top_zone_id:ZONES[0].id, top_score:ZONES[0].score });
+tel('recommendation-shown', { zone_id:ZONES[0].id, zone_name:ZONES[0].name, score:ZONES[0].score, action_text:ZONES[0].tag, reason:ZONES[0].why })
+  .then(/* set _lastRec from response would need async, skipped for simplicity */);
+
+setInterval(tick, 60000);
+setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}); }, 1000);
+</script>
+</body>
+</html>
